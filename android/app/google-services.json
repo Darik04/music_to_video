@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "233148365180",
+    "project_id": "musictovideo-10b49",
+    "storage_bucket": "musictovideo-10b49.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:233148365180:android:a808d272a47ce01149ccf9",
+        "android_client_info": {
+          "package_name": "com.ninecode.musictovideo"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "233148365180-bri88jar9ghm4j32ar300kb6se679c8g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.ninecode.musictovideo",
+            "certificate_hash": "9bbb3186b2189ef16d8f272bdab59362c395cbb4"
+          }
+        },
+        {
+          "client_id": "233148365180-5ccgsgbb31bba2mld2bl49qdlfsoph0c.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCQ14r3iAAj9QZaQSpCXH-MbnN5qVoNjCc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "233148365180-5ccgsgbb31bba2mld2bl49qdlfsoph0c.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "233148365180-0lit5gqd6t6j52ii69dkf8d3hingot56.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.ninecode.musictovideo"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

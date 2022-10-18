@@ -76,3 +76,24 @@ Future<String> mergeAudio(String v, String pathToAudio1,String pathToAudio2, Dur
     throw 'FFmpeg process exited with state $state and return code $code.\n${await session.getOutput()}';
   }
 }
+
+
+
+
+Future<String> cutVideo(String path, Duration startDuration, Duration duration) async {
+  String command = '-i \'${path}\' -ss 0${startDuration.toString().substring(0, 7)}  -t 0${duration.toString().substring(0, 7)}';
+  final String tempPath = (await getTemporaryDirectory()).path;
+  final int epoch = DateTime.now().millisecondsSinceEpoch;
+  final String outputPath = "$tempPath/VID_$epoch.mp4";
+  command += ' -c copy $outputPath';
+  print('COMMAND VID: ${command}');
+  var session = await FFmpegKit.execute(command);
+  final state =
+      FFmpegKitConfig.sessionStateToString(await session.getState());
+  final code = await session.getReturnCode();
+  if (code?.isValueSuccess() == true) {
+    return outputPath;
+  }else {
+    throw 'FFmpeg process exited with state $state and return code $code.\n${await session.getOutput()}';
+  }
+}

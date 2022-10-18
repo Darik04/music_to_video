@@ -1,5 +1,8 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
+import 'package:flutter/foundation.dart';
+import 'package:music_to_video/project_editor/widgets/video_widget.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
@@ -15,11 +18,11 @@ import '../main/main_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:timeline_editor/timeline_editor.dart';
-import 'package:video_editor/video_editor.dart';
 import 'package:video_player/video_player.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:gallery_saver/gallery_saver.dart';
 import 'helpers/data_saver.dart';
+import 'helpers/thumbnail.dart';
 
 class ProjectEditorWidget extends StatefulWidget {
   final EditorModel? editorModel;
@@ -45,7 +48,7 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
   String outputGlobalPath = '';
 
   bool _exported = false;
-  late VideoEditorController _controller;
+  late VideoPlayerController _controller;
   List<AudioModel> _records = [];
   List<String> cacheFiles = [];
   // List<String> _recordsPaths = [];
@@ -57,10 +60,12 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
   double position = 0;
   bool customTimeString = false;
   bool withHeaders = false;
+  bool isCuttingVideo = false;
   int volume = 1;
   EditorModel? editorModel;
-  late StreamController<double> positionController;
+  late StreamController<int> positionController = StreamController<int>();
   late Timer progressTimer;
+  late final StreamController<List<Uint8List>> _stream = StreamController<List<Uint8List>>();
   // TimelineEditorScaleController scaleController;
 
   double scale = 0.0;
@@ -112,31 +117,31 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
   }
 
   Future<String> generateFFMPEGCommand() async{
-    String audioInputPath = _controller.file.path;
+    String audioInputPath = _controller.dataSource;
     for(var i = 0; _records.length > i; i++){
       _records[i].pathToAudioCutted = await cutAudio(_records[i].pathToAudio, _records[i].startCutDurationForExport, _records[i].duration);
       print('AUDIO CUTTED INDEX $i: ${_records[i].pathToAudioCutted}');
       cacheFiles.add(_records[i].pathToAudioCutted);
       _exportingProgress.value += (3/100);
       if(volume == 1 && i == 0){
-        audioInputPath = _controller.file.path;
+        audioInputPath =  _controller.dataSource;
       }
       if(volume == 0 && _records.length == 1){
-        audioInputPath = _controller.file.path;
-        audioInputPath = await mergeAudio(_controller.file.path, audioInputPath, _records[i].pathToAudioCutted, Duration(seconds: 0), _records[i].startDuration, videoDur, muteAudio1: true);
+        audioInputPath =  _controller.dataSource;
+        audioInputPath = await mergeAudio( _controller.dataSource, audioInputPath, _records[i].pathToAudioCutted, Duration(seconds: 0), _records[i].startDuration, videoDur, muteAudio1: true);
         cacheFiles.add(audioInputPath);
       }else if(volume == 0 && i == 0){
         continue;
       }else if(volume == 0 && i == 1){
-        audioInputPath = await mergeAudio(_controller.file.path, _records[i-1].pathToAudioCutted, _records[i].pathToAudioCutted, _records[i-1].startDuration, _records[i].startDuration, videoDur);
+        audioInputPath = await mergeAudio( _controller.dataSource, _records[i-1].pathToAudioCutted, _records[i].pathToAudioCutted, _records[i-1].startDuration, _records[i].startDuration, videoDur);
         cacheFiles.add(audioInputPath);
       }else{
-        audioInputPath = await mergeAudio(_controller.file.path, audioInputPath, _records[i].pathToAudioCutted, Duration(seconds: 0), _records[i].startDuration, videoDur);
+        audioInputPath = await mergeAudio( _controller.dataSource, audioInputPath, _records[i].pathToAudioCutted, Duration(seconds: 0), _records[i].startDuration, videoDur);
         cacheFiles.add(audioInputPath);
       }
       _exportingProgress.value += (3/100);
     }
-    String command = '-i \'${_controller.file.path}\' -ss 00:00:00  -t 0${videoDur.toString().substring(0, 7)}';
+    String command = '-i \'${ _controller.dataSource}\' -ss 00:00:00  -t 0${videoDur.toString().substring(0, 7)}';
     final String tempPath = (await getTemporaryDirectory()).path;
     final int epoch = DateTime.now().millisecondsSinceEpoch;
     final String videoOutputPath = "$tempPath/MUSIC_TO_VIDEO_$epoch.mp4";
@@ -220,41 +225,42 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
   handlerPlayer() async{
     // print('TIMER: ${_controller.isPlaying} : ${_records.length} :');
     for(var i = 0; _records.length > i; i++){
-      if(!_controller.isPlaying){
+      Duration position = _controller.value.position;
+      if(!_controller.value.isPlaying){
         //Если видео выкл
         if(_records[i].audioPlayer.state == PlayerState.playing){
           _records[i].audioPlayer.pause();
         }
         //Если аудио вкл и позиция видео больше конца аудио или позиция видео меньше старта аудио то Видео выкл(вырубаем) 
-      }else if(_controller.video.value.position.inSeconds >= (_records[i].startDuration.inSeconds+_records[i].duration.inSeconds)
-        || _controller.video.value.position.inSeconds < _records[i].startDuration.inSeconds){
+      }else if(_controller.value.position.inSeconds >= (_records[i].startDuration.inSeconds+_records[i].duration.inSeconds)
+        || _controller.value.position.inSeconds < _records[i].startDuration.inSeconds){
           if(_records[i].audioPlayer.state == PlayerState.playing){
             _records[i].audioPlayer.pause();
           }
         //Если видео вкл и аудио выкл и 
-      }else if(_controller.isPlaying && _records[i].audioPlayer.state != PlayerState.playing 
-        && _controller.video.value.position.inSeconds >= _records[i].startDuration.inSeconds){
+      }else if(_controller.value.isPlaying && _records[i].audioPlayer.state != PlayerState.playing 
+        && _controller.value.position.inSeconds >= _records[i].startDuration.inSeconds){
           _records[i].audioPlayer.pause();
-          _records[i].audioPlayer.play(DeviceFileSource(_records[i].pathToAudio), position: Duration(seconds: (_controller.video.value.position.inSeconds-_records[i].startDuration.inSeconds)+_records[i].startCutDurationForExport.inSeconds));
-      }else if(_controller.isPlaying 
-        && !(_controller.video.value.position.inSeconds - (((await _records[i].audioPlayer.getCurrentPosition())!.inSeconds-_records[i].startCutDurationForExport.inSeconds) + _records[i].startDuration.inSeconds)).isBetween(-3, 3)
-        && _controller.video.value.position.inSeconds >= _records[i].startDuration.inSeconds){
+          _records[i].audioPlayer.play(DeviceFileSource(_records[i].pathToAudio), position: Duration(seconds: (_controller.value.position.inSeconds-_records[i].startDuration.inSeconds)+_records[i].startCutDurationForExport.inSeconds));
+      }else if(_controller.value.isPlaying
+        && !(_controller.value.position.inSeconds - (((await _records[i].audioPlayer.getCurrentPosition())!.inSeconds-_records[i].startCutDurationForExport.inSeconds) + _records[i].startDuration.inSeconds)).isBetween(-3, 3)
+        && _controller.value.position.inSeconds >= _records[i].startDuration.inSeconds){
           _records[i].audioPlayer.pause();
-          _records[i].audioPlayer.play(DeviceFileSource(_records[i].pathToAudio), position: Duration(seconds: (_controller.video.value.position.inSeconds-_records[i].startDuration.inSeconds)+_records[i].startCutDurationForExport.inSeconds));
+          _records[i].audioPlayer.play(DeviceFileSource(_records[i].pathToAudio), position: Duration(seconds: (_controller.value.position.inSeconds-_records[i].startDuration.inSeconds)+_records[i].startCutDurationForExport.inSeconds));
       }
     }
       
   }
 
   void _allPlayerPause(){
-    _controller.video.pause();
+    _controller.pause();
     for(var record in _records){
       record.audioPlayer.pause();
     }
   }
   void _allPlayerDispose(){
-    _controller.video.pause();
-    _controller.video.dispose();
+    _controller.pause();
+    _controller.dispose();
     saveChanges();
     for(var record in _records){
       record.audioPlayer.pause();
@@ -265,27 +271,37 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
   @override
   void initState() {
     print('EDITOR: ${widget.editorModel?.pathToVideo}');
-    _controller = VideoEditorController.file(
-      widget.file != null ? widget.file! : File(widget.editorModel!.pathToVideo),
-      // maxDuration: const Duration(seconds: 30),
-      trimStyle: TrimSliderStyle(
-        lineColor: Color(0xFFF39530),
-        lineWidth: 2,
-        positionLineColor: Colors.white,
-        positionLineWidth: 2,
-        // leftIcon: null,
-        iconSize: 0,
-        circleSize: 0,
-        // circleColor: Colors.transparent,
-        // iconColor: Colors.red,
-        background: Colors.transparent,
-      ),
+    _controller = VideoPlayerController.file(
+      widget.file != null ? widget.file! : File(widget.editorModel!.pathToVideo)
     )..initialize().then((_) async {
-      await _controller.video.play();
-      await _controller.video.pause();
+      await _controller.play();
+      await _controller.pause();
       setEditor();
     });
+    // _controller = VideoEditorController.file(
+    //   widget.file != null ? widget.file! : File(widget.editorModel!.pathToVideo),
+    //   // maxDuration: const Duration(seconds: 30),
+    //   trimStyle: TrimSliderStyle(
+    //     lineColor: Color(0xFFF39530),
+    //     lineWidth: 2,
+    //     positionLineColor: Colors.white,
+    //     positionLineWidth: 2,
+    //     // leftIcon: null,
+    //     iconSize: 0,
+    //     circleSize: 0,
+    //     // circleColor: Colors.transparent,
+    //     // iconColor: Colors.red,
+    //     background: Colors.transparent,
+    //   ),
+    // )..initialize().then((_) async {
+    //   await _controller.video.play();
+    //   await _controller.video.pause();
+    //   setEditor();
+    // });
     _startTimer();
+    _controller.addListener(() {
+      positionController.sink.add(_controller.value.position.inSeconds);
+    });
     super.initState();
   }
 
@@ -293,7 +309,7 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
   setEditor() async{
     if(widget.editorModel == null){
       setState(() {
-        videoDur = _controller.video.value.duration;
+        videoDur = _controller.value.duration;
       });
       editorModel = EditorModel(
         editorCode: DateTime.now().millisecondsSinceEpoch.toString(), 
@@ -301,12 +317,14 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
         pathToVideo: widget.file!.path, 
         records: [], 
         endCutDuration: videoDur,
+        durationFullTrack: videoDur,
         startCutDuration: Duration(seconds: 0),
         picture: null
       );
     }else{
       editorModel = widget.editorModel;
-      videoDur = editorModel!.durationVideo;
+      videoDur = _controller.value.duration;
+      editorModel!.durationVideo = _controller.value.duration;
       setState(() {});
       _records = editorModel!.records;
       for(int i = 0; i < _records.length; i++){
@@ -316,7 +334,57 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
       }
       setState(() {});
     }
+    getThumnails();
     saveChanges();
+  }
+
+  List<Uint8List> thumnails = [];
+  getThumnails() async{
+    for(var i = 1; i <= 8; i++){
+      print('ADDED: ${i}');
+      Uint8List? bytes = await generateThumbnail(editorModel!.pathToVideo, videoDur, i);
+      if(bytes != null){
+        thumnails.add(bytes);
+      }
+      _stream.sink.add(thumnails);
+    }
+  }
+  
+  _cutVideo(Duration startCutDuration, Duration endCutDuration) async{
+    Duration durVideo = videoDur;
+    setState(() {
+      isCuttingVideo = true;
+    });
+    String path = await cutVideo(_controller.dataSource, startCutDuration, Duration(seconds: (endCutDuration.inSeconds-startCutDuration.inSeconds)));
+    print('CUTTED: ${path}');
+    _controller = VideoPlayerController.file(
+      File(path)
+    );
+    _controller.initialize().then((_) async {
+      print('INITED: ${_controller.value.duration}');
+      thumnails = [];
+      getThumnails();
+      videoDur = _controller.value.duration;
+      await _controller.play();
+      await _controller.pause();
+      editorModel!.pathToVideo = path;
+      editorModel!.durationVideo = videoDur;
+      editorModel!.durationFullTrack = _records.any((element) => element.duration > videoDur) ? editorModel!.durationFullTrack : videoDur;
+      editorModel!.endCutDuration = _controller.value.duration;
+      editorModel!.startCutDuration = Duration(seconds: 0);
+      _controller.addListener(() {
+        positionController.sink.add(_controller.value.position.inSeconds);
+      });
+      for(var i = 0; i < _records.length; i++){
+        Duration offset = (startCutDuration.inSeconds >= 1
+        ? startCutDuration
+        : Duration(seconds: (durVideo.inSeconds-endCutDuration.inSeconds)));
+        _records[i].startDuration = offset > _records[i].startDuration ? Duration(seconds: 0) : (_records[i].startDuration - offset);
+      }
+      isCuttingVideo = false;
+      setState(() {});
+      saveChanges();
+    });
   }
 
 
@@ -331,6 +399,9 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
       );
       editorModel!.picture = file;
     }
+    if(editorModel!.durationFullTrack == null){
+      editorModel!.durationFullTrack = videoDur;
+    }
     saveEditorModel(editorModel!);
   }
 
@@ -339,7 +410,9 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
     _exportingProgress.dispose();
     _isExporting.dispose();
     _allPlayerDispose();
+    _controller.removeListener(() { });
     _controller.dispose();
+    positionController.close();
     timer!.cancel();
     super.dispose();
   }
@@ -478,35 +551,39 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
                               decoration: BoxDecoration(),
                               child: Column(
                                 children: [
-                                  SizedBox(
-                                    height: 272,
-                                    child: Stack(
-                                      children: [
-                                        Positioned.fill(
-                                          child: BlurFilter(
-                                            child: VideoPlayer(_controller.video)
+                                  GestureDetector(
+                                    onTap: (){
+                                      _controller.value.isPlaying ? _controller.pause() : _controller.play();
+                                    },
+                                    child: SizedBox(
+                                      height: 272,
+                                      child: Stack(
+                                        alignment: Alignment.center,
+                                        children: [
+                                          BlurFilter(
+                                            child: VideoPlayer(_controller)
                                           ),
-                                        ),
-                                        CropGridViewer(
-                                          controller: _controller,
-                                          showGrid: false,
-                                        ),
-                                      ],
+                                          AspectRatio(
+                                            aspectRatio: _controller.value.aspectRatio,
+                                            child: VideoPlayer(_controller)
+                                          )
+                                        ],
+                                      ),
                                     ),
                                   ),
                                   if(true)
                                   AnimatedBuilder(
-                                    animation: _controller.video,
+                                    animation: _controller,
                                     builder: (_, __) {
                                       final duration = videoDur.inSeconds;
-                                      final pos = _controller.videoPosition;
+                                      final pos = _controller.value.position;
                                       // final start = _controller.minTrim * duration;
                                       // final end = _controller.maxTrim * duration;
 
                                       return Padding(
                                         padding:
                                             EdgeInsetsDirectional.fromSTEB(
-                                                0, 30, 0, 0),
+                                                0, 44, 0, 0),
                                         child: Row(
                                           mainAxisSize: MainAxisSize.max,
                                           mainAxisAlignment:
@@ -514,14 +591,12 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
                                           children: [
                                             GestureDetector(
                                               onTap: () {
-                                                !_controller.isPlaying
-                                                    ? _controller.video
-                                                        .play()
-                                                    : _controller.video
-                                                        .pause();
+                                                !_controller.value.isPlaying
+                                                    ? _controller.play()
+                                                    : _controller.pause();
                                               },
                                               child: SvgPicture.asset(
-                                                !_controller.isPlaying
+                                                !_controller.value.isPlaying
                                                     ? 'assets/images/Play.svg'
                                                     : 'assets/images/pause.svg',
                                                 width: 32,
@@ -592,11 +667,11 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
                 }else{
                   volume = 0;
                 }
-                _controller.video.setVolume(volume.toDouble());
+                _controller.setVolume(volume.toDouble());
               });
             },
             child: Padding(
-              padding: const EdgeInsets.only(top: 45),
+              padding: const EdgeInsets.only(top: 54),
               child: SvgPicture.asset(
                 'assets/images/Volume_Down.svg',
                 width: 24,
@@ -607,41 +682,50 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
             ),
           ),
           SizedBox(width: 13,),
-          Expanded(
-            child: TimelineEditor(
-              separatorColor: Colors.transparent,
-              timelineTextStyle: TextStyle(color: Colors.transparent),
-              onPositionTap: (s) => position = s,
-              countTracks: 1+_records.length,
-              duration: videoDur,
-              trackBuilder: (track, pps, duration) => track == 0
-              ? TimelineEditorTrack(
-                defaultColor: Colors.transparent,
-                trackHeight: 72,
-                boxes: [
-                  TimelineEditorBox(
-                    Duration.zero, 
-                    videoDur,
-                    child: TrimSlider(
-                      controller: _controller,
-                      height: 50,
-                      child: null,
-                    ),
-                    // VideoWidget(
-                    //   countBits: 2,
-                    //   pps: pps,
-                    //   editorModel: editorModel!,
-                    //   onCut: (startDuration, endDuration) {},
-                    //   position: _controller.videoPosition,
-                    // )
-                    
-                  ),
-                ],
-                pixelsPerSeconds: pps,
-                duration: duration,
-              )
-              : getTrackByIndex(track, pps, duration)
-            ),
+          StreamBuilder<int>(
+            stream: positionController.stream,
+            builder: (context, snapshot) {
+              return Expanded(
+                child: TimelineEditor(
+                  separatorColor: Colors.transparent,
+                  timelineTextStyle: TextStyle(color: Colors.transparent),
+                  onPositionTap: (s) => position = s,
+                  countTracks: 1+_records.length,
+                  duration: editorModel!.durationFullTrack,
+                  trackBuilder: (track, pps, duration) => track == 0
+                  ? TimelineEditorTrack(
+                    defaultColor: Colors.transparent,
+                    trackHeight: 72,
+                    boxes: [
+                      TimelineEditorBox(
+                        Duration.zero, 
+                        videoDur,
+                        child: VideoWidget(
+                          isCuttingVideo: isCuttingVideo,
+                          pps: pps,
+                          editorModel: editorModel!,
+                          thumbnailsStream: _stream.stream,
+                          onCut: _cutVideo,
+                          onPositionChange: (seconds){
+                            _controller.seekTo(Duration(seconds: seconds));
+                          },
+                          position: Duration(seconds: snapshot.data ?? 0),
+                        )
+                        // TrimSlider(
+                        //   controller: _controller,
+                        //   height: 50,
+                        //   child: null,
+                        // ),
+                        
+                      ),
+                    ],
+                    pixelsPerSeconds: pps,
+                    duration: duration,
+                  )
+                  : getTrackByIndex(track, pps, duration)
+                ),
+              );
+            }
           ),
         ],
       ),
@@ -813,17 +897,9 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
 
   exportSecondStep() async {
     String commandToExec = await generateFFMPEGCommand();
-    _controller.exportVideo(
-      // outDir: '/data/user/0/com.example.videoedit/cache',
-      // preset: VideoExportPreset.medium,
-      customInstruction: commandToExec,
-      onProgress: (stats, value) {
-        if(value > 50){
-          _exportingProgress.value = value;
-        }
-      },
-      onError: (e, s) => print('ERROR: $e'),
-      onCompleted: (file) async {
+    FFmpegKit.executeAsync(
+      commandToExec,
+      (file) async {
         _isExporting.value = false;
         if (!mounted) return;
         print('GALLERY SAVER');
@@ -913,6 +989,14 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
             });
         });
       },
+      null,
+      (stats) {
+        double progressValue =
+            stats.getTime() / videoDur.inMilliseconds;
+        if(progressValue > 50){
+          _exportingProgress.value = progressValue;
+        }
+      }
     );
   }
 }

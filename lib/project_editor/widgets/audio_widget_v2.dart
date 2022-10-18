@@ -84,10 +84,10 @@ class _AudioWidgetV2State extends State<AudioWidgetV2> {
                   });
                   onCut();
                 },
-                behavior: HitTestBehavior.translucent,
+                behavior: HitTestBehavior.opaque,
                 child: Container(
                   width: 3,
-                  margin: EdgeInsets.only(right: 5),
+                  margin: EdgeInsets.only(right: 15),
                   height: isDragged == 1 ? 50 : 36,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
@@ -100,7 +100,7 @@ class _AudioWidgetV2State extends State<AudioWidgetV2> {
               ),
             ),
             Padding(
-              padding: EdgeInsets.only(left: end <= 0 ? 0 : end-5),
+              padding: EdgeInsets.only(left: end <= 0 ? 0 : end-15),
               child: GestureDetector(
                 onHorizontalDragUpdate: (details){
                   onDragUpdateEnd(details.delta.dx);
@@ -116,10 +116,10 @@ class _AudioWidgetV2State extends State<AudioWidgetV2> {
                   });
                   onCut();
                 },
-                behavior: HitTestBehavior.translucent,
+                behavior: HitTestBehavior.opaque,
                 child: Container(
                   width: 3,
-                  margin: EdgeInsets.only(left: 5),
+                  margin: EdgeInsets.only(left: 15),
                   height: isDragged == 2 ? 50 : 36,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),

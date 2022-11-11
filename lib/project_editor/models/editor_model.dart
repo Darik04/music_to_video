@@ -8,6 +8,7 @@ class EditorModel{
   Duration endCutDuration;
   String? picture;
   String pathToVideo;
+  String pathToOriginalVideo;
   List<AudioModel> records;
 
   EditorModel({
@@ -15,6 +16,7 @@ class EditorModel{
     required this.durationVideo,
     required this.durationFullTrack,
     required this.pathToVideo,
+    required this.pathToOriginalVideo,
     required this.records,
     required this.startCutDuration,
     required this.endCutDuration,
@@ -31,6 +33,7 @@ class EditorModel{
     startCutDuration: Duration(seconds: 0),
     endCutDuration: Duration(seconds: json['duration'] ?? 0),
     pathToVideo: json['path_to_video'],
+    pathToOriginalVideo: json['path_to_original_video'] ?? json['path_to_video'],
     records: json['records'] == null 
     ? []
     : (json['records'] as List).map((json) => AudioModel.fromJson(json)).toList()
@@ -45,6 +48,7 @@ class EditorModel{
       'duration': durationVideo.inSeconds,
       'duration_full': durationFullTrack == null ? null : durationFullTrack!.inSeconds,
       'path_to_video': pathToVideo,
+      'path_to_original_video': pathToOriginalVideo,
       'records': records.map((e) => e.toJson()).toList()
     };
   }

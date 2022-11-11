@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:music_to_video/project_editor/helpers/time_helper.dart';
 import 'package:music_to_video/project_editor/models/editor_model.dart';
 
 class VideoWidget extends StatefulWidget {
@@ -32,13 +33,13 @@ class _VideoWidgetState extends State<VideoWidget> {
   @override
   Widget build(BuildContext context) {
     print('PPS IS: ${widget.pps}');
-    double start = (widget.editorModel.startCutDuration.inSeconds*widget.pps)-4;
-    double end = (widget.editorModel.endCutDuration.inSeconds*widget.pps)-4;
+    double start = (widget.editorModel.startCutDuration.inSeconds*widget.pps)-9;
+    double end = (widget.editorModel.endCutDuration.inSeconds*widget.pps)-9;
     bool isLeftPadding = (widget.editorModel.durationVideo.inSeconds/2) < (isDraggedPosition ? position.inSeconds : widget.position.inSeconds);
     bool isRightPadding = (widget.editorModel.durationVideo.inSeconds/2) > (isDraggedPosition ? position.inSeconds : widget.position.inSeconds);
     double leftOffset = (isDraggedPosition 
-      ? (widget.pps*position.inSeconds-(isLeftPadding?0:10)) 
-      : (widget.pps*widget.position.inSeconds-(isLeftPadding?0:10))
+      ? (widget.pps*position.inSeconds-(isLeftPadding?0:8)) 
+      : (widget.pps*widget.position.inSeconds-(isLeftPadding?0:8))
     );
     if(leftOffset.isNegative){
       leftOffset = 0;
@@ -91,7 +92,6 @@ class _VideoWidgetState extends State<VideoWidget> {
             }
           ),
         ),
-        
         Padding(
           padding: EdgeInsets.only(left: start <= 0 ? 0 : start),
           child: GestureDetector(
@@ -112,7 +112,7 @@ class _VideoWidgetState extends State<VideoWidget> {
             behavior: HitTestBehavior.translucent,
             child: Container(
               width: 3,
-              margin: EdgeInsets.only(right: 5),
+              margin: EdgeInsets.only(right: 10),
               height: isDragged == 1 || widget.isCuttingVideo ? 50 : 36,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
@@ -144,7 +144,7 @@ class _VideoWidgetState extends State<VideoWidget> {
             behavior: HitTestBehavior.translucent,
             child: Container(
               width: 3,
-              margin: EdgeInsets.only(left: 5),
+              margin: EdgeInsets.only(left: 10),
               height: isDragged == 2 || widget.isCuttingVideo ? 50 : 36,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(20),
@@ -156,32 +156,34 @@ class _VideoWidgetState extends State<VideoWidget> {
             ),
           ),
         ),
-        GestureDetector(
-          onHorizontalDragUpdate: (details){
-            onDragUpdatePosition(details.delta.dx);
-          },
-          onHorizontalDragEnd: (_){
-            widget.onPositionChange(position.inSeconds);
-            setState(() {
-              widget.position = position;
-              isDraggedPosition = false;
-            });
-          },
-          onHorizontalDragStart: (_){
-            setState(() {
-              isDraggedPosition = true;
-            });
-          },
-          behavior: HitTestBehavior.translucent,
-          child: Padding(
-            padding: EdgeInsets.only(
-              left: isLeftPadding ? 8 : 0,
-              right: isRightPadding ? 8 : 0
-            ),
+
+        Padding(
+          padding: EdgeInsets.only(left: isLeftPadding ? (leftOffset-12) : leftOffset),
+          child: GestureDetector(
+            onHorizontalDragUpdate: (details){
+              onDragUpdatePosition(details.delta.dx);
+            },
+            onHorizontalDragEnd: (_){
+              widget.onPositionChange(position.inSeconds);
+              setState(() {
+                widget.position = position;
+                isDraggedPosition = false;
+              });
+            },
+            onHorizontalDragStart: (_){
+              setState(() {
+                position = widget.position;
+                isDraggedPosition = true;
+              });
+            },
+            behavior: HitTestBehavior.translucent,
             child: Container(
-              margin: EdgeInsets.only(left: leftOffset),
               width: 2,
               height: 70,
+              margin: EdgeInsets.only(
+                left: isLeftPadding ? 8 : 0,
+                right: isRightPadding ? 8 : 0
+              ),
               decoration: BoxDecoration(
                 color: Color(0xFFEF7C00),
                 borderRadius: BorderRadius.circular(5)
@@ -189,6 +191,7 @@ class _VideoWidgetState extends State<VideoWidget> {
             ),
           ),
         ),
+        
       ],
     );
   }
@@ -198,54 +201,53 @@ class _VideoWidgetState extends State<VideoWidget> {
 
 
   void onDragUpdateEnd(double deltaX){
-    int seconds = (deltaX/widget.pps+widget.editorModel.endCutDuration.inSeconds).toInt();
-    int secondsComplete = 0;
-    if(seconds >= widget.editorModel.durationVideo.inSeconds){
-      secondsComplete = widget.editorModel.durationVideo.inSeconds;
-    }else if(seconds < (widget.editorModel.startCutDuration.inSeconds+(widget.editorModel.durationVideo.inSeconds*0.2).toInt())){
-      secondsComplete = widget.editorModel.startCutDuration.inSeconds+(widget.editorModel.durationVideo.inSeconds*0.2).toInt();
+    double seconds = (toMicroSeconds(deltaX/widget.pps)+widget.editorModel.endCutDuration.inMicroseconds);
+    double secondsComplete = 0;
+    if(seconds >= widget.editorModel.durationVideo.inMicroseconds){
+      secondsComplete = widget.editorModel.durationVideo.inMicroseconds.toDouble();
+    }else if(seconds < (widget.editorModel.startCutDuration.inMicroseconds+(widget.editorModel.durationVideo.inMicroseconds*0.2))){
+      secondsComplete = widget.editorModel.startCutDuration.inMicroseconds+(widget.editorModel.durationVideo.inMicroseconds*0.2);
     }else{
       secondsComplete = seconds;
     }
     setState(() {
       widget.editorModel.endCutDuration = Duration(
-        seconds: secondsComplete
+        microseconds: secondsComplete.round()
       );
     });
   }
 
 
   void onDragUpdateStart(double deltaX){
-    int seconds = (deltaX/widget.pps+widget.editorModel.startCutDuration.inSeconds).toInt();
-    int secondsComplete = 0;
+    double seconds = (toMicroSeconds(deltaX/widget.pps)+widget.editorModel.startCutDuration.inMicroseconds);
+    double secondsComplete = 0;
     if(seconds <= 0){
       secondsComplete = 0;
-    }else if(seconds > (widget.editorModel.endCutDuration.inSeconds-(widget.editorModel.durationVideo.inSeconds*0.2).toInt())){
-      secondsComplete = widget.editorModel.endCutDuration.inSeconds-(widget.editorModel.durationVideo.inSeconds*0.2).toInt();
+    }else if(seconds > (widget.editorModel.endCutDuration.inMicroseconds-(widget.editorModel.durationVideo.inMicroseconds*0.2))){
+      secondsComplete = widget.editorModel.endCutDuration.inMicroseconds-(widget.editorModel.durationVideo.inMicroseconds*0.2);
     }else{
       secondsComplete = seconds;
     }
     setState(() {
       widget.editorModel.startCutDuration = Duration(
-        seconds: secondsComplete
+        microseconds: secondsComplete.round()
       );
     });
   }
 
   void onDragUpdatePosition(double deltaX){
-    deltaX = deltaX.isNegative ? deltaX/2 : deltaX;
-    int seconds = (deltaX/widget.pps+position.inSeconds).toInt();
-    int secondsComplete = 0;
+    double seconds = (toMicroSeconds(deltaX/widget.pps)+position.inMicroseconds);
+    double secondsComplete = 0;
     if(seconds <= 0){
       secondsComplete = 0;
-    }else if(seconds >= widget.editorModel.durationVideo.inSeconds){
-      secondsComplete = widget.editorModel.durationVideo.inSeconds;
+    }else if(seconds >= widget.editorModel.durationVideo.inMicroseconds){
+      secondsComplete = widget.editorModel.durationVideo.inMicroseconds.toDouble();
     }else{
       secondsComplete = seconds;
     }
     setState(() {
       position = Duration(
-        seconds: secondsComplete
+        microseconds: secondsComplete.round()
       );
     });
   }

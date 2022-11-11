@@ -2,16 +2,17 @@ import 'dart:async';
 import 'dart:io';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:flutter/foundation.dart';
+import 'package:music_to_video/project_editor/done_page.dart';
+import 'package:music_to_video/project_editor/loader_page.dart';
+import 'package:music_to_video/project_editor/widgets/blur_filter.dart';
 import 'package:music_to_video/project_editor/widgets/video_widget.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
-import 'dart:ui';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:music_to_video/project_editor/helpers/editor_cache.dart';
 import 'package:music_to_video/project_editor/models/audio_model.dart';
 import 'package:music_to_video/project_editor/models/editor_model.dart';
 import 'package:music_to_video/project_editor/widgets/audio_widget_v2.dart';
 import 'package:music_to_video/project_editor/widgets/loader.dart';
-import 'package:percent_indicator/percent_indicator.dart';
 import '../components/add_track_widget.dart';
 import '../flutter_flow/flutter_flow_theme.dart';
 import '../main/main_widget.dart';
@@ -39,11 +40,9 @@ class ProjectEditorWidget extends StatefulWidget {
 }
 
 class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
-  final scaffoldKey = GlobalKey<ScaffoldState>();
 
   final _exportingProgress = ValueNotifier<double>(0.0);
   final _isExporting = ValueNotifier<bool>(false);
-  final double height = 50;
   Duration videoDur = Duration.zero;
   String outputGlobalPath = '';
 
@@ -51,29 +50,15 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
   late VideoPlayerController _controller;
   List<AudioModel> _records = [];
   List<String> cacheFiles = [];
-  // List<String> _recordsPaths = [];
-  Duration totalDuration = Duration(seconds: 600);
-
   
 
-  bool deleted = false;
   double position = 0;
-  bool customTimeString = false;
-  bool withHeaders = false;
   bool isCuttingVideo = false;
   int volume = 1;
   EditorModel? editorModel;
   late StreamController<int> positionController = StreamController<int>();
   late Timer progressTimer;
   late final StreamController<List<Uint8List>> _stream = StreamController<List<Uint8List>>();
-  // TimelineEditorScaleController scaleController;
-
-  double scale = 0.0;
-
-  double _trackHeight = 100;
-
-  // late AnimationController _controller;
-  late Animation<double> _animation;
 
   File? audioFile;
 
@@ -278,26 +263,6 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
       await _controller.pause();
       setEditor();
     });
-    // _controller = VideoEditorController.file(
-    //   widget.file != null ? widget.file! : File(widget.editorModel!.pathToVideo),
-    //   // maxDuration: const Duration(seconds: 30),
-    //   trimStyle: TrimSliderStyle(
-    //     lineColor: Color(0xFFF39530),
-    //     lineWidth: 2,
-    //     positionLineColor: Colors.white,
-    //     positionLineWidth: 2,
-    //     // leftIcon: null,
-    //     iconSize: 0,
-    //     circleSize: 0,
-    //     // circleColor: Colors.transparent,
-    //     // iconColor: Colors.red,
-    //     background: Colors.transparent,
-    //   ),
-    // )..initialize().then((_) async {
-    //   await _controller.video.play();
-    //   await _controller.video.pause();
-    //   setEditor();
-    // });
     _startTimer();
     _controller.addListener(() {
       positionController.sink.add(_controller.value.position.inSeconds);
@@ -315,6 +280,7 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
         editorCode: DateTime.now().millisecondsSinceEpoch.toString(), 
         durationVideo: videoDur, 
         pathToVideo: widget.file!.path, 
+        pathToOriginalVideo: widget.file!.path, 
         records: [], 
         endCutDuration: videoDur,
         durationFullTrack: videoDur,
@@ -341,7 +307,6 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
   List<Uint8List> thumnails = [];
   getThumnails() async{
     for(var i = 1; i <= 8; i++){
-      print('ADDED: ${i}');
       Uint8List? bytes = await generateThumbnail(editorModel!.pathToVideo, videoDur, i);
       if(bytes != null){
         thumnails.add(bytes);
@@ -357,6 +322,9 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
     });
     String path = await cutVideo(_controller.dataSource, startCutDuration, Duration(seconds: (endCutDuration.inSeconds-startCutDuration.inSeconds)));
     print('CUTTED: ${path}');
+    if(_controller.dataSource != editorModel!.pathToOriginalVideo){
+      File(_controller.dataSource).delete();
+    }
     _controller = VideoPlayerController.file(
       File(path)
     );
@@ -381,6 +349,40 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
         : Duration(seconds: (durVideo.inSeconds-endCutDuration.inSeconds)));
         _records[i].startDuration = offset > _records[i].startDuration ? Duration(seconds: 0) : (_records[i].startDuration - offset);
       }
+      isCuttingVideo = false;
+      setState(() {});
+      saveChanges();
+    });
+  }
+
+
+
+  _resetVideo(){
+    Duration durVideo = videoDur;
+    setState(() {
+      isCuttingVideo = true;
+    });
+    print('RESET VIDEO');
+    if(_controller.dataSource != editorModel!.pathToOriginalVideo){
+      File(_controller.dataSource).delete();
+    }
+    _controller = VideoPlayerController.file(
+      File(editorModel!.pathToOriginalVideo)
+    );
+    _controller.initialize().then((_) async {
+      thumnails = [];
+      getThumnails();
+      videoDur = _controller.value.duration;
+      await _controller.play();
+      await _controller.pause();
+      editorModel!.pathToVideo = editorModel!.pathToOriginalVideo;
+      editorModel!.durationVideo = videoDur;
+      editorModel!.durationFullTrack = _records.any((element) => element.duration > videoDur) ? editorModel!.durationFullTrack : videoDur;
+      editorModel!.endCutDuration = _controller.value.duration;
+      editorModel!.startCutDuration = Duration(seconds: 0);
+      _controller.addListener(() {
+        positionController.sink.add(_controller.value.position.inSeconds);
+      });
       isCuttingVideo = false;
       setState(() {});
       saveChanges();
@@ -588,7 +590,17 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
                                           mainAxisSize: MainAxisSize.max,
                                           mainAxisAlignment:
                                               MainAxisAlignment.center,
+                                              crossAxisAlignment: CrossAxisAlignment.center,
                                           children: [
+                                            GestureDetector(
+                                              onTap: _resetVideo,
+                                              child: SvgPicture.asset(
+                                                'assets/images/reset_video.svg',
+                                                height: 26,
+                                                fit: BoxFit.cover,
+                                              ),
+                                            ),
+                                            SizedBox(width: 12,),
                                             GestureDetector(
                                               onTap: () {
                                                 !_controller.value.isPlaying
@@ -682,9 +694,12 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
             ),
           ),
           SizedBox(width: 13,),
+          if(editorModel != null)
           StreamBuilder<int>(
             stream: positionController.stream,
             builder: (context, snapshot) {
+              if(!snapshot.hasData)
+              return Container();
               return Expanded(
                 child: TimelineEditor(
                   separatorColor: Colors.transparent,
@@ -797,97 +812,7 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
       MaterialPageRoute(
         builder: (context) {
           // NOTE: To use `-crf 1` and [VideoExportPreset] you need `ffmpeg_kit_flutter_min_gpl` package (with `ffmpeg_kit` only it won't work)
-          return Scaffold(
-            // key: scaffoldKey,
-            backgroundColor: Color(0xFF2A2D2F),
-            body: GestureDetector(
-              onTap: () => FocusScope.of(context).unfocus(),
-              child: Container(
-                width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height * 1,
-                decoration: BoxDecoration(
-                  image: DecorationImage(
-                    fit: BoxFit.fill,
-                    image: Image.asset(
-                      'assets/images/bg.png',
-                    ).image,
-                  ),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Container(
-                      width: 300,
-                      height: 308,
-                      decoration: BoxDecoration(),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        children: [
-                          SvgPicture.asset(
-                            'assets/images/Processing.svg',
-                            width: 200,
-                            height: 200,
-                            fit: BoxFit.cover,
-                          ),
-                          Padding(
-                            padding:
-                                EdgeInsetsDirectional.fromSTEB(0, 44, 0, 12),
-                            child: Text(
-                              'Processing...',
-                              style: FlutterFlowTheme.of(context)
-                                  .bodyText1
-                                  .override(
-                                    fontFamily: 'Poppins',
-                                    fontWeight: FontWeight.normal,
-                                  ),
-                            ),
-                          ),
-                          Padding(
-                            padding:
-                                EdgeInsetsDirectional.fromSTEB(23, 0, 0, 0),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              children: [
-                                ValueListenableBuilder(
-                                  valueListenable: _exportingProgress,
-                                  builder: (_, double value, __) => Text(
-                                    "${(value * 100).ceil()}%",
-                                    textAlign: TextAlign.start,
-                                    style: FlutterFlowTheme.of(context)
-                                        .bodyText1
-                                        .override(
-                                          fontFamily: 'Poppins',
-                                          color: Color(0xFFFDFEFF),
-                                          fontWeight: FontWeight.normal,
-                                        ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          ValueListenableBuilder(
-                            valueListenable: _exportingProgress,
-                            builder: (_, double value, __) =>
-                                LinearPercentIndicator(
-                              percent: value,
-                              width: 300,
-                              lineHeight: 8,
-                              animation: false,
-                              progressColor: Color(0xFFF39530),
-                              backgroundColor: Color(0xB2F1F4F8),
-                              barRadius: Radius.circular(10),
-                              padding: EdgeInsets.zero,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          );
+          return LoaderPage(exportingProgress: _exportingProgress);
         },
       ),
     );
@@ -910,84 +835,22 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
           context,
           MaterialPageRoute(
             builder: (context) {
-              return Scaffold(
-                // key: scaffoldKey,
-                backgroundColor: Color(0xFF2A2D2F),
-                body: GestureDetector(
-                  onTap: () => FocusScope.of(context).unfocus(),
-                  child: Container(
-                    width: MediaQuery.of(context).size.width,
-                    height: MediaQuery.of(context).size.height * 1,
-                    decoration: BoxDecoration(
-                      image: DecorationImage(
-                        fit: BoxFit.fill,
-                        image: Image.asset(
-                          'assets/images/bg.png',
-                        ).image,
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.max,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 300,
-                          height: 308,
-                          decoration: BoxDecoration(),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.max,
-                            children: [
-                              SvgPicture.asset(
-                                'assets/images/Done.svg',
-                                width: 160,
-                                height: 160,
-                                fit: BoxFit.cover,
-                              ),
-                              Padding(
-                                padding: EdgeInsetsDirectional.fromSTEB(
-                                    0, 44, 0, 12),
-                                child: Text(
-                                  'Done',
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyText1
-                                      .override(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 28,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                ),
-                              ),
-                              Text(
-                                'The video has been saved to your gallery',
-                                style: FlutterFlowTheme.of(context)
-                                    .bodyText1
-                                    .override(
-                                      fontFamily: 'Poppins',
-                                      color: Color(0xFFF39530),
-                                      fontWeight: FontWeight.normal,
-                                    ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
+              return DonePage();
             },
           ),
         );
 
         setState(() => _exported = true);
         Future.delayed(const Duration(seconds: 2),
-            () {
+          () {
+            Navigator.pop(context);
             Navigator.pop(context);
             Navigator.pop(context);
             setState((){
               _exported = false;
             });
-        });
+          }
+        );
       },
       null,
       (stats) {
@@ -1001,34 +864,6 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
   }
 }
 
-
-class BlurFilter extends StatelessWidget {
-  final Widget child;
-  final double sigmaX;
-  final double sigmaY;
-  BlurFilter({required this.child, this.sigmaX = 5.0, this.sigmaY = 5.0});
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: <Widget>[
-        child,
-        ClipRect(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(
-              sigmaX: sigmaX,
-              sigmaY: sigmaY,
-            ),
-            child: Opacity(
-              opacity: 0.01,
-              child: child,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
 
 
 extension Range on num {

@@ -43,19 +43,31 @@ class _CreateProjectWidgetState extends State<CreateProjectWidget> {
   void _pickVideo() async {
     final XFile? file = await _picker.pickVideo(source: ImageSource.gallery);
     if (mounted && file != null) {
-      Navigator.push(
+      navigate(File(file.path));
+    }
+  }
+
+
+  void _recordVideo() async {
+    final XFile? file = await _picker.pickVideo(source: ImageSource.camera);
+
+    if(file != null){
+      navigate(File(file.path));
+    }
+                       
+  }
+
+  void navigate(File file){
+    Navigator.pop(context);
+    Navigator.push(
         context,
         MaterialPageRoute<void>(
-            builder: (BuildContext context) => ProjectEditorWidget(
-              file: File(file.path),
-              editorModel: null,
-            )
-            // VideoEditor(
-            //   file: File(file.path),
-            // ),
-            ),
+          builder: (BuildContext context) => ProjectEditorWidget(
+            file: File(file.path),
+            editorModel: null,
+          )
+        ),
       );
-    }
   }
 
   @override
@@ -247,51 +259,7 @@ class _CreateProjectWidgetState extends State<CreateProjectWidget> {
                   Padding(
                     padding: EdgeInsetsDirectional.fromSTEB(0, 16, 0, 0),
                     child: FFButtonWidget(
-                      onPressed: () async {
-                        final selectedMedia = await selectMedia(
-                          isVideo: true,
-                          multiImage: false,
-                        );
-                        if (selectedMedia != null &&
-                            selectedMedia.every((m) =>
-                                validateFileFormat(m.storagePath, context))) {
-                          showUploadMessage(
-                            context,
-                            'Uploading file...',
-                            showLoading: true,
-                          );
-                          final downloadUrls = (await Future.wait(selectedMedia
-                                  .map((m) async => await uploadData(
-                                      m.storagePath, m.bytes))))
-                              .where((u) => u != null)
-                              .map((u) => u!)
-                              .toList();
-                          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                          if (downloadUrls.length == selectedMedia.length) {
-                            setState(
-                                () => uploadedFileUrl2 = downloadUrls.first);
-                            showUploadMessage(
-                              context,
-                              'Success!',
-                            );
-                          } else {
-                            showUploadMessage(
-                              context,
-                              'Failed to upload media',
-                            );
-                            return;
-                          }
-                        }
-
-                        final projectsCreateData = createProjectsRecordData(
-                          name: textController!.text,
-                          video: uploadedFileUrl2,
-                        );
-                        await ProjectsRecord.collection
-                            .doc()
-                            .set(projectsCreateData);
-                        Navigator.pop(context);
-                      },
+                      onPressed: _recordVideo,
                       text: 'Record new video',
                       icon: Icon(
                         FFIcons.kvideo,

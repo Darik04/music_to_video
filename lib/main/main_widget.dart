@@ -98,48 +98,6 @@ class _MainWidgetState extends State<MainWidget> {
                           children: [
                             Padding(
                               padding:
-                                  EdgeInsetsDirectional.fromSTEB(18, 0, 0, 0),
-                              child: Container(
-                                width: 80,
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: InkWell(
-                                  onTap: () async {
-                                    await showModalBottomSheet(
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      context: context,
-                                      builder: (context) {
-                                        return Padding(
-                                          padding:
-                                              MediaQuery.of(context).viewInsets,
-                                          child: Container(
-                                            height: 303,
-                                            child: CreateProjectWidget(
-                                              _imageProjectsRecordSingleBack,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    );
-                                    refreshData();
-                                  },
-                                  child: ClipRRect(
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: SvgPicture.asset(
-                                      'assets/images/AddProject.svg',
-                                      width: 80,
-                                      height: 80,
-                                      fit: BoxFit.cover,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding:
                                   EdgeInsetsDirectional.fromSTEB(0, 0, 16, 0),
                               child: ListView.builder(
                                 padding: EdgeInsets.zero,
@@ -150,7 +108,7 @@ class _MainWidgetState extends State<MainWidget> {
                                 itemBuilder: (context, listViewIndex) {
                                   return Padding(
                                     padding: EdgeInsetsDirectional.fromSTEB(
-                                        18, 0, 0, 0),
+                                        16, 0, 0, 0),
                                     child: Container(
                                       width: 80,
                                       height: 80,
@@ -199,7 +157,86 @@ class _MainWidgetState extends State<MainWidget> {
                                     ),
                                   );
                                 },
-                              )
+                              ),
+                            ),
+                            Padding(
+                              padding:
+                                  EdgeInsetsDirectional.fromSTEB(0, 0, 0, 0),
+                              child: Container(
+                                width: 80,
+                                height: 80,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
+                                child: InkWell(
+                                  onTap: () async {
+                                    await showModalBottomSheet(
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      context: context,
+                                      builder: (context) {
+                                        return Padding(
+                                          padding:
+                                              MediaQuery.of(context).viewInsets,
+                                          child: Container(
+                                            height: 303,
+                                            child: CreateProjectWidget(
+                                              _imageProjectsRecordSingleBack,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                    refreshData();
+                                  },
+                                  child: ClipRRect(
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: SvgPicture.asset(
+                                      'assets/images/AddProject.svg',
+                                      width: 80,
+                                      height: 80,
+                                      fit: BoxFit.cover,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+
+
+                            Padding(
+                              padding:
+                                  EdgeInsetsDirectional.fromSTEB(0, 0, 16, 0),
+                              child: ListView.builder(
+                                padding: EdgeInsets.zero,
+                                primary: false,
+                                shrinkWrap: true,
+                                scrollDirection: Axis.horizontal,
+                                itemCount: 3,
+                                itemBuilder: (context, listViewIndex) {
+                                  return Padding(
+                                    padding: EdgeInsetsDirectional.fromSTEB(
+                                        16, 0, 0, 0),
+                                    child: Container(
+                                      width: 80,
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        borderRadius:
+                                            BorderRadius.circular(20),
+                                      ),
+                                      alignment: AlignmentDirectional(0, 0),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: SvgPicture.asset(
+                                          'assets/images/empty_project.svg',
+                                          width: 80,
+                                          height: 80,
+                                          fit: BoxFit.cover,
+                                        ),
+                                      ),
+                                    )
+                                  );
+                                },
+                              ),
                             ),
                           ],
                         ),

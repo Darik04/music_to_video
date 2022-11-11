@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:music_to_video/flutter_flow/flutter_flow_theme.dart';
 import 'package:music_to_video/project_editor/models/audio_model.dart';
+
+import '../helpers/time_helper.dart';
 class AudioWidgetV2 extends StatefulWidget {
   final int countBits; 
   final double pps;
@@ -71,6 +73,7 @@ class _AudioWidgetV2State extends State<AudioWidgetV2> {
               padding: EdgeInsets.only(left: start <= 0 ? 0 : start),
               child: GestureDetector(
                 onHorizontalDragUpdate: (details){
+                  if(details.delta.dx != 0)
                   onDragUpdateStart(details.delta.dx);
                 },
                 onHorizontalDragStart: (_){
@@ -87,7 +90,7 @@ class _AudioWidgetV2State extends State<AudioWidgetV2> {
                 behavior: HitTestBehavior.opaque,
                 child: Container(
                   width: 3,
-                  margin: EdgeInsets.only(right: 15),
+                  margin: EdgeInsets.only(right: 30),
                   height: isDragged == 1 ? 50 : 36,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
@@ -100,7 +103,7 @@ class _AudioWidgetV2State extends State<AudioWidgetV2> {
               ),
             ),
             Padding(
-              padding: EdgeInsets.only(left: end <= 0 ? 0 : end-15),
+              padding: EdgeInsets.only(left: end <= 0 ? 0 : end-30),
               child: GestureDetector(
                 onHorizontalDragUpdate: (details){
                   onDragUpdateEnd(details.delta.dx);
@@ -119,7 +122,7 @@ class _AudioWidgetV2State extends State<AudioWidgetV2> {
                 behavior: HitTestBehavior.opaque,
                 child: Container(
                   width: 3,
-                  margin: EdgeInsets.only(left: 15),
+                  margin: EdgeInsets.only(left: 30),
                   height: isDragged == 2 ? 50 : 36,
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
@@ -142,36 +145,36 @@ class _AudioWidgetV2State extends State<AudioWidgetV2> {
 
 
   void onDragUpdateEnd(double deltaX){
-    int seconds = (deltaX/widget.pps+widget.audioModel.endCutDuration.inSeconds).toInt();
-    int secondsComplete = 0;
-    if(seconds >= widget.audioModel.duration.inSeconds){
-      secondsComplete = widget.audioModel.duration.inSeconds;
-    }else if(seconds < (widget.audioModel.startCutDuration.inSeconds+(widget.audioModel.duration.inSeconds*0.2).toInt())){
-      secondsComplete = widget.audioModel.startCutDuration.inSeconds+(widget.audioModel.duration.inSeconds*0.2).toInt();
+    double seconds = (toMicroSeconds(deltaX/widget.pps)+widget.audioModel.endCutDuration.inMicroseconds);
+    double secondsComplete = 0;
+    if(seconds >= widget.audioModel.duration.inMicroseconds){
+      secondsComplete = widget.audioModel.duration.inMicroseconds.toDouble();
+    }else if(seconds < (widget.audioModel.startCutDuration.inMicroseconds+(widget.audioModel.duration.inMicroseconds*0.2))){
+      secondsComplete = widget.audioModel.startCutDuration.inMicroseconds+(widget.audioModel.duration.inMicroseconds*0.2);
     }else{
       secondsComplete = seconds;
     }
     setState(() {
       widget.audioModel.endCutDuration = Duration(
-        seconds: secondsComplete
+        microseconds: secondsComplete.round()
       );
     });
   }
 
 
   void onDragUpdateStart(double deltaX){
-    int seconds = (deltaX/widget.pps+widget.audioModel.startCutDuration.inSeconds).toInt();
-    int secondsComplete = 0;
+    double seconds = (toMicroSeconds(deltaX/widget.pps)+widget.audioModel.startCutDuration.inMicroseconds);
+    double secondsComplete = 0;
     if(seconds <= 0){
       secondsComplete = 0;
-    }else if(seconds > (widget.audioModel.endCutDuration.inSeconds-(widget.audioModel.duration.inSeconds*0.2).toInt())){
-      secondsComplete = widget.audioModel.endCutDuration.inSeconds-(widget.audioModel.duration.inSeconds*0.2).toInt();
+    }else if(seconds > (widget.audioModel.endCutDuration.inMicroseconds-(widget.audioModel.duration.inMicroseconds*0.2))){
+      secondsComplete = widget.audioModel.endCutDuration.inMicroseconds-(widget.audioModel.duration.inMicroseconds*0.2);
     }else{
       secondsComplete = seconds;
     }
     setState(() {
       widget.audioModel.startCutDuration = Duration(
-        seconds: secondsComplete
+        microseconds: secondsComplete.round()
       );
     });
   }

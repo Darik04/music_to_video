@@ -33,8 +33,8 @@ class _VideoWidgetState extends State<VideoWidget> {
   @override
   Widget build(BuildContext context) {
     print('PPS IS: ${widget.pps}');
-    double start = (widget.editorModel.startCutDuration.inSeconds*widget.pps)-9;
-    double end = (widget.editorModel.endCutDuration.inSeconds*widget.pps)-9;
+    double start = (widget.editorModel.startCutDuration.inMilliseconds*(widget.pps/1000))-9;
+    double end = (widget.editorModel.endCutDuration.inMilliseconds*(widget.pps/1000))-9;
     bool isLeftPadding = (widget.editorModel.durationVideo.inSeconds/2) < (isDraggedPosition ? position.inSeconds : widget.position.inSeconds);
     bool isRightPadding = (widget.editorModel.durationVideo.inSeconds/2) > (isDraggedPosition ? position.inSeconds : widget.position.inSeconds);
     double leftOffset = (isDraggedPosition 

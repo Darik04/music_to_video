@@ -79,6 +79,7 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
             pps: pps,
             audioModel: _records[index],
             onCut: (startDuration, endDuration){
+              _controller.pause();
               _records[index].startDuration = Duration(milliseconds: _records[index].startDuration.inMilliseconds+startDuration.inMilliseconds);
               _records[index].duration = Duration(
                 milliseconds: _records[index].duration.inMilliseconds
@@ -107,7 +108,7 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
       _records[i].pathToAudioCutted = await cutAudio(_records[i].pathToAudio, _records[i].startCutDurationForExport, _records[i].duration);
       print('AUDIO CUTTED INDEX $i: ${_records[i].pathToAudioCutted}');
       cacheFiles.add(_records[i].pathToAudioCutted);
-      _exportingProgress.value += (3/100);
+      _exportingProgress.value += (6/100);
       if(volume == 1 && i == 0){
         audioInputPath =  _controller.dataSource;
       }
@@ -124,7 +125,7 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
         audioInputPath = await mergeAudio( _controller.dataSource, audioInputPath, _records[i].pathToAudioCutted, Duration(seconds: 0), _records[i].startDuration, videoDur);
         cacheFiles.add(audioInputPath);
       }
-      _exportingProgress.value += (3/100);
+      _exportingProgress.value += (6/100);
     }
     String command = '-i \'${ _controller.dataSource}\' -ss 00:00:00  -t 0${videoDur.toString().substring(0, 7)}';
     final String tempPath = (await getTemporaryDirectory()).path;
@@ -155,7 +156,7 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
   }
 
   void moveBox(Duration newStart, int index, Duration trackDuration) {
-    if (_records[index].startDuration + newStart < Duration.zero || (_records[index].startDuration + newStart + trackDuration) >= videoDur) {
+    if (_records[index].startDuration + newStart < Duration.zero || (_records[index].startDuration + newStart + trackDuration) >= editorModel!.durationFullTrack!) {
       newStart = Duration.zero;
     }
     setState(() {
@@ -164,7 +165,7 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
   }
 
   setValue(dynamic? value) async{
-    if (value != null) {
+    if (value != null && _records.length <= 8) {
       print('SETTING: ${value}');
       final AudioPlayer newAudioPlayer = AudioPlayer();
 
@@ -191,6 +192,9 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
           pathToAudioCutted: ''
         )
       );
+      if(_records.last.duration > (editorModel!.durationFullTrack ?? editorModel!.durationVideo)){
+        editorModel!.durationFullTrack = (_records.last.duration+Duration(seconds: 1));
+      }
       print('SET: ${_records}');
       setState(() {});
       saveChanges();
@@ -228,7 +232,7 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
           _records[i].audioPlayer.pause();
           _records[i].audioPlayer.play(DeviceFileSource(_records[i].pathToAudio), position: Duration(seconds: (_controller.value.position.inSeconds-_records[i].startDuration.inSeconds)+_records[i].startCutDurationForExport.inSeconds));
       }else if(_controller.value.isPlaying
-        && !(_controller.value.position.inSeconds - (((await _records[i].audioPlayer.getCurrentPosition())!.inSeconds-_records[i].startCutDurationForExport.inSeconds) + _records[i].startDuration.inSeconds)).isBetween(-3, 3)
+        && !(_controller.value.position.inSeconds - (((await _records[i].audioPlayer.getCurrentPosition())!.inSeconds-_records[i].startCutDurationForExport.inSeconds) + _records[i].startDuration.inSeconds)).isBetween(-2, 2)
         && _controller.value.position.inSeconds >= _records[i].startDuration.inSeconds){
           _records[i].audioPlayer.pause();
           _records[i].audioPlayer.play(DeviceFileSource(_records[i].pathToAudio), position: Duration(seconds: (_controller.value.position.inSeconds-_records[i].startDuration.inSeconds)+_records[i].startCutDurationForExport.inSeconds));
@@ -316,6 +320,7 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
   }
   
   _cutVideo(Duration startCutDuration, Duration endCutDuration) async{
+    _controller.pause();
     Duration durVideo = videoDur;
     setState(() {
       isCuttingVideo = true;
@@ -413,7 +418,6 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
     _isExporting.dispose();
     _allPlayerDispose();
     _controller.removeListener(() { });
-    _controller.dispose();
     positionController.close();
     timer!.cancel();
     super.dispose();

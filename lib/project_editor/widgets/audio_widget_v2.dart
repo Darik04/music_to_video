@@ -22,8 +22,8 @@ class _AudioWidgetV2State extends State<AudioWidgetV2> {
 
   @override
   Widget build(BuildContext context) {
-    double start = (widget.audioModel.startCutDuration.inSeconds*widget.pps)-4;
-    double end = (widget.audioModel.endCutDuration.inSeconds*widget.pps)-4;
+    double start = (widget.audioModel.startCutDuration.inMilliseconds*(widget.pps/1000))-4;
+    double end = (widget.audioModel.endCutDuration.inMilliseconds*(widget.pps/1000))-4;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.center,
       mainAxisAlignment: MainAxisAlignment.start,

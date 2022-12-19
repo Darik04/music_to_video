@@ -40,6 +40,7 @@ class _CreateProjectWidgetState extends State<CreateProjectWidget> {
     textController = TextEditingController();
   }
 
+  //Pick from source(phone)
   void _pickVideo() async {
     final XFile? file = await _picker.pickVideo(source: ImageSource.gallery);
     if (mounted && file != null) {
@@ -48,13 +49,13 @@ class _CreateProjectWidgetState extends State<CreateProjectWidget> {
   }
 
 
+
+  //Pick from camera
   void _recordVideo() async {
     final XFile? file = await _picker.pickVideo(source: ImageSource.camera);
-
     if(file != null){
       navigate(File(file.path));
     }
-                       
   }
 
   void navigate(File file){

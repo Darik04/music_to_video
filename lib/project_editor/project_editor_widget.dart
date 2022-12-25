@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:music_to_video/backend/schema/tracks_record.dart';
 import 'package:music_to_video/project_editor/done_page.dart';
 import 'package:music_to_video/project_editor/loader_page.dart';
 import 'package:music_to_video/project_editor/widgets/blur_filter.dart';
@@ -15,6 +17,7 @@ import 'package:music_to_video/project_editor/widgets/audio_widget_v2.dart';
 import 'package:music_to_video/project_editor/widgets/loader.dart';
 import '../components/add_track_widget.dart';
 import '../flutter_flow/flutter_flow_theme.dart';
+import '../flutter_flow/upload_media.dart';
 import '../main/main_widget.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -164,17 +167,20 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
     });
   }
 
-  setValue(dynamic? value) async{
-    if (value != null && _records.length <= 8) {
+  setValue(dynamic? value, {String? path}) async{
+    if (_records.length <= 8) {
       print('SETTING: ${value}');
       final AudioPlayer newAudioPlayer = AudioPlayer();
 
-      //Download to cache music!
-      Loader(context: context).showMyDialog();
-      final String tempPath = (await getTemporaryDirectory()).path;
-      final String outputPath = "$tempPath";
-      String audioPath = await downloadFile(value.audio ?? '', outputPath);
-      Navigator.pop(context);
+      String audioPath = path ?? '';
+      if(path == null && value != null){
+        //Download to cache music!
+        Loader(context: context).showMyDialog();
+        final String tempPath = (await getTemporaryDirectory()).path;
+        final String outputPath = "$tempPath";
+        audioPath = await downloadFile(value.audio ?? '', outputPath);
+        Navigator.pop(context);
+      }
 
       await newAudioPlayer.setSource(DeviceFileSource(audioPath));
       _records.add(
@@ -185,8 +191,8 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
           startCutDurationForExport: Duration(seconds: 0), 
           endCutDuration: (await newAudioPlayer.getDuration()) ?? Duration.zero, 
           endCutDurationForExport: Duration(seconds: 0), 
-          urlToAudio: value.audio ?? '', 
-          trackName: value.trackName ?? '',
+          urlToAudio: value == null ? '' : value.audio ?? '', 
+          trackName: value == null ? 'Track ${_records.length+1}' : value.trackName ?? '',
           pathToAudio: audioPath,
           audioPlayer: newAudioPlayer,
           pathToAudioCutted: ''
@@ -272,6 +278,27 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
       positionController.sink.add(_controller.value.position.inSeconds);
     });
     super.initState();
+  }
+
+
+  selectAudioFile() async{
+    try{
+      print('SELECT');
+      FilePickerResult? fres = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['mp3', 'wav']
+      );
+      if(fres != null && fres.files.isNotEmpty){
+        // final String tempPath = (await getTemporaryDirectory()).path;
+        // final String outputPath = "$tempPath";
+        // File file = await rawToFile(fres.files.first.bytes!, outputPath);
+        print('VAL: ${fres.paths.first}');
+        Navigator.pop(context);
+        setValue(null, path: fres.paths.first);
+      }
+    }catch(e){
+      print('ERROR: $e');
+    }
   }
 
 
@@ -766,7 +793,9 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
                 builder: (context) {
                   return Padding(
                     padding: MediaQuery.of(context).viewInsets,
-                    child: AddTrackWidget(),
+                    child: AddTrackWidget(
+                      onTapImport: selectAudioFile,
+                    ),
                   );
                 },
               ).then((v){

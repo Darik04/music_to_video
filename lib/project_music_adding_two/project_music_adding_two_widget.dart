@@ -650,7 +650,9 @@ class _ProjectMusicAddingTwoWidgetState
                                     return Padding(
                                       padding:
                                           MediaQuery.of(context).viewInsets,
-                                      child: AddTrackWidget(),
+                                      child: AddTrackWidget(
+                                        onTapImport: (){},
+                                      ),
                                     );
                                   },
                                 );

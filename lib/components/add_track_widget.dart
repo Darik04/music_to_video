@@ -9,7 +9,8 @@ import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class AddTrackWidget extends StatefulWidget {
-  const AddTrackWidget({Key? key}) : super(key: key);
+  final Function() onTapImport;
+  const AddTrackWidget({Key? key, required this.onTapImport}) : super(key: key);
 
   @override
   _AddTrackWidgetState createState() => _AddTrackWidgetState();
@@ -135,17 +136,18 @@ class _AddTrackWidgetState extends State<AddTrackWidget> {
                       padding: EdgeInsetsDirectional.fromSTEB(0, 14, 0, 0),
                       child: FFButtonWidget(
                         onPressed: () async {
-                          await showModalBottomSheet(
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            context: context,
-                            builder: (context) {
-                              return Padding(
-                                padding: MediaQuery.of(context).viewInsets,
-                                child: AirDropWidget(),
-                              );
-                            },
-                          );
+                          // await showModalBottomSheet(
+                          //   isScrollControlled: true,
+                          //   backgroundColor: Colors.transparent,
+                          //   context: context,
+                          //   builder: (context) {
+                          //     return Padding(
+                          //       padding: MediaQuery.of(context).viewInsets,
+                          //       child: AirDropWidget(),
+                          //     );
+                          //   },
+                          // );
+                          widget.onTapImport();
                         },
                         text: 'Import music',
                         icon: Icon(

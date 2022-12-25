@@ -1,3 +1,5 @@
+import 'package:apphud/apphud.dart';
+import 'package:apphud/models/apphud_models/composite/apphud_product_composite.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -17,7 +19,7 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   await FlutterFlowTheme.initialize();
-
+  await Apphud.start(apiKey: "app_XDNBhgwwi28LccUQQb3jKYoydJHsg3");
   runApp(MyApp());
   setupInjections();
 }
@@ -38,7 +40,7 @@ class _MyAppState extends State<MyApp> {
   late Stream<MusicToVideoFirebaseUser> userStream;
   MusicToVideoFirebaseUser? initialUser;
   bool displaySplashImage = true;
-
+  bool isLoading = true;
   final authUserSub = authenticatedUserStream.listen((_) {});
 
   @override
@@ -51,6 +53,24 @@ class _MyAppState extends State<MyApp> {
       () => setState(() => displaySplashImage = false),
     );
     getConfig();
+    getAppHudProducts();
+  }
+
+  getAppHudProducts() async{
+    print('ACTIVE SUB: ${await Apphud.hasActiveSubscription()}');
+    List<ApphudProductComposite>? list = await Apphud.products();
+    print('APPHUD PRODUCTS: ${await Apphud.products()}');
+    if(list != null){
+      for(var item in list){
+        print('APPHUD ITEM: ${item.skProductWrapper}');
+        print('APPHUD ITEM2: ${item.skuDetailsWrapper}');
+      }
+      sl<ConfigApp>().product = list.first.skProductWrapper;
+      sl<ConfigApp>().isSubscribe = await Apphud.hasActiveSubscription();
+    }
+    setState(() {
+      isLoading = false;  
+    });
   }
 
   getConfig() async{
@@ -87,7 +107,7 @@ class _MyAppState extends State<MyApp> {
       theme: ThemeData(brightness: Brightness.light),
       darkTheme: ThemeData(brightness: Brightness.dark),
       themeMode: _themeMode,
-      home: initialUser == null || displaySplashImage
+      home: initialUser == null || displaySplashImage || isLoading
           ? Center(
               child: SizedBox(
                 width: 50,
@@ -99,7 +119,7 @@ class _MyAppState extends State<MyApp> {
             )
           : currentUser!.loggedIn
               ? PreviewPageWidget()
-              : PreviewPageFourWidget(),
+              : MainWidget(),
     );
   }
 }

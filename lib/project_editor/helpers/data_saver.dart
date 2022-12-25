@@ -36,6 +36,17 @@ Future<String> downloadFile(String url, String dir) async {
 
 
 
+
+Future<File> rawToFile(Uint8List raw, String dir) async {
+  final tempDir = await getTemporaryDirectory();
+  final int epoch = DateTime.now().millisecondsSinceEpoch;
+  File file = await File('${tempDir.path}/AUD_$epoch.mp3').create();
+  file.writeAsBytesSync(raw);
+  return file;
+}
+
+
+
 Future<String> cutAudio(String pathToAudio, Duration startDuration, Duration duration) async {
   String command = '-i \'${pathToAudio}\' -ss 0${startDuration.toString().substring(0, 7)}  -t 0${duration.toString().substring(0, 7)}';
   final String tempPath = (await getTemporaryDirectory()).path;

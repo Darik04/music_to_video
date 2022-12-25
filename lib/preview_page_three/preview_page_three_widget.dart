@@ -1,3 +1,5 @@
+import 'package:music_to_video/index.dart';
+
 import '../flutter_flow/flutter_flow_theme.dart';
 import '../flutter_flow/flutter_flow_util.dart';
 import '../flutter_flow/flutter_flow_widgets.dart';
@@ -184,11 +186,14 @@ class _PreviewPageThreeWidgetState extends State<PreviewPageThreeWidget> {
                       padding: EdgeInsetsDirectional.fromSTEB(16, 123, 16, 0),
                       child: FFButtonWidget(
                         onPressed: () async {
-                          await Navigator.push(
+                          await Navigator.pushAndRemoveUntil(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => PreviewPageFourWidget(),
+                              builder: (context) => MainWidget(),
                             ),
+                            (route) {
+                              return false;
+                            }
                           );
                         },
                         text: 'Continue',

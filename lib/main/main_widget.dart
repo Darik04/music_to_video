@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:music_to_video/config_app.dart';
+import 'package:music_to_video/preview_page_four/preview_page_four_widget.dart';
 import 'package:music_to_video/project_editor/models/editor_model.dart';
 
 import '../backend/backend.dart';
@@ -41,6 +42,26 @@ class _MainWidgetState extends State<MainWidget> {
   }
   final scaffoldKey = GlobalKey<ScaffoldState>();
   var _imageProjectsRecordSingleBack;
+
+  showShowModalNewProject() async{
+    await showModalBottomSheet(
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      context: context,
+      builder: (context) {
+        return Padding(
+          padding:
+              MediaQuery.of(context).viewInsets,
+          child: Container(
+            height: 303+MediaQuery.of(context).padding.top,
+            child: CreateProjectWidget(
+              _imageProjectsRecordSingleBack,
+            ),
+          ),
+        );
+      },
+    );
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,16 +140,20 @@ class _MainWidgetState extends State<MainWidget> {
                                       alignment: AlignmentDirectional(0, 0),
                                       child: InkWell(
                                         onTap: () async {
-                                          await Navigator.push(
-                                            context,
-                                            MaterialPageRoute(
-                                              builder: (context) =>
-                                                  ProjectEditorWidget(
-                                                  editorModel: editors[listViewIndex],
+                                          if(!sl<ConfigApp>().isSubscribe){
+                                            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => PreviewPageFourWidget()));
+                                          }else{
+                                            await Navigator.push(
+                                              context,
+                                              MaterialPageRoute(
+                                                builder: (context) =>
+                                                    ProjectEditorWidget(
+                                                    editorModel: editors[listViewIndex],
+                                                ),
                                               ),
-                                            ),
-                                          );
-                                          refreshData();
+                                            );
+                                            refreshData();
+                                          }
                                         },
                                         child: ClipRRect(
                                           borderRadius:
@@ -170,24 +195,12 @@ class _MainWidgetState extends State<MainWidget> {
                                 ),
                                 child: InkWell(
                                   onTap: () async {
-                                    await showModalBottomSheet(
-                                      isScrollControlled: true,
-                                      backgroundColor: Colors.transparent,
-                                      context: context,
-                                      builder: (context) {
-                                        return Padding(
-                                          padding:
-                                              MediaQuery.of(context).viewInsets,
-                                          child: Container(
-                                            height: 303,
-                                            child: CreateProjectWidget(
-                                              _imageProjectsRecordSingleBack,
-                                            ),
-                                          ),
-                                        );
-                                      },
-                                    );
-                                    refreshData();
+                                    if(sl<ConfigApp>().isSubscribe){
+                                      Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => PreviewPageFourWidget()));
+                                    }else{
+                                      await showShowModalNewProject();
+                                      refreshData();
+                                    }
                                   },
                                   child: ClipRRect(
                                     borderRadius: BorderRadius.circular(20),
@@ -249,23 +262,12 @@ class _MainWidgetState extends State<MainWidget> {
                       padding: EdgeInsetsDirectional.fromSTEB(0, 80, 0, 0),
                       child: FFButtonWidget(
                         onPressed: () async {
-                          await showModalBottomSheet(
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            context: context,
-                            builder: (context) {
-                              return Padding(
-                                padding: MediaQuery.of(context).viewInsets,
-                                child: Container(
-                                  height: 303,
-                                  child: CreateProjectWidget(
-                                    _imageProjectsRecordSingleBack,
-                                  ),
-                                ),
-                              );
-                            },
-                          );
-                          refreshData();
+                          if(!sl<ConfigApp>().isSubscribe){
+                            Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => PreviewPageFourWidget()));
+                          }else{
+                            await showShowModalNewProject();
+                            refreshData();
+                          }
                         },
                         text: 'New Project',
                         options: FFButtonOptions(

@@ -72,22 +72,26 @@ class _AudioWidgetV2State extends State<AudioWidgetV2> {
             Padding(
               padding: EdgeInsets.only(left: start <= 0 ? 0 : start),
               child: GestureDetector(
-                onHorizontalDragUpdate: (details){
-                  if(details.delta.dx != 0)
+                onHorizontalDragUpdate: canCutAudio() 
+                ? (details){
+                  if(details.delta.dx != 0 && canCutAudio())
                   onDragUpdateStart(details.delta.dx);
-                },
-                onHorizontalDragStart: (_){
+                } : null,
+                onHorizontalDragStart: canCutAudio() 
+                ? (_){
                   setState(() {
-                    isDragged = 1;
+                    if(canCutAudio()){
+                      isDragged = 1;
+                    }
                   });
-                },
+                } : null,
                 onHorizontalDragEnd: (_){
                   setState(() {
                     isDragged = 0;
                   });
                   onCut();
                 },
-                behavior: HitTestBehavior.opaque,
+                behavior: HitTestBehavior.translucent,
                 child: Container(
                   width: 3,
                   margin: EdgeInsets.only(right: 30),
@@ -105,21 +109,25 @@ class _AudioWidgetV2State extends State<AudioWidgetV2> {
             Padding(
               padding: EdgeInsets.only(left: end <= 0 ? 0 : end-30),
               child: GestureDetector(
-                onHorizontalDragUpdate: (details){
+                onHorizontalDragUpdate: canCutAudio() 
+                ? (details){
+                  if(canCutAudio())
                   onDragUpdateEnd(details.delta.dx);
-                },
-                onHorizontalDragStart: (_){
-                  setState(() {
+                } : null,
+                onHorizontalDragStart: canCutAudio() 
+                ? (_){
+                  setState(() { 
+                    if(canCutAudio())
                     isDragged = 2;
                   });
-                },
+                } : null,
                 onHorizontalDragEnd: (_){
                   setState(() {
                     isDragged = 0;
                   });
                   onCut();
                 },
-                behavior: HitTestBehavior.opaque,
+                behavior: HitTestBehavior.translucent,
                 child: Container(
                   width: 3,
                   margin: EdgeInsets.only(left: 30),
@@ -181,5 +189,12 @@ class _AudioWidgetV2State extends State<AudioWidgetV2> {
 
   void onCut(){
     widget.onCut(widget.audioModel.startCutDuration, widget.audioModel.endCutDuration);
+  }
+
+
+
+
+  bool canCutAudio(){
+    return (50/widget.pps) < (widget.audioModel.duration.inMilliseconds/1000);
   }
 }

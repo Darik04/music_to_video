@@ -1,3 +1,8 @@
+import 'package:apphud/apphud.dart';
+import 'package:apphud/models/apphud_models/composite/apphud_purchase_result.dart';
+import 'package:music_to_video/config_app.dart';
+import 'package:music_to_video/locator.dart';
+
 import '../flutter_flow/flutter_flow_theme.dart';
 import '../flutter_flow/flutter_flow_util.dart';
 import '../flutter_flow/flutter_flow_widgets.dart';
@@ -21,6 +26,18 @@ class _PreviewPageFourWidgetState extends State<PreviewPageFourWidget> {
   double? ratingBarValue2;
   double? ratingBarValue3;
   final scaffoldKey = GlobalKey<ScaffoldState>();
+
+
+  purchase() async{
+    ApphudPurchaseResult res = await Apphud.purchase(productId: sl<ConfigApp>().product!.productIdentifier);
+    print('RESULT: ${res}');
+    print('RESULT: ${res.subscription?.isActive}');
+    if(res.subscription != null && res.subscription!.isActive){
+      print('COOOLL!');
+      sl<ConfigApp>().isSubscribe = true;
+      Navigator.pop(context);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -62,12 +79,13 @@ class _PreviewPageFourWidgetState extends State<PreviewPageFourWidget> {
                               children: [
                                 InkWell(
                                   onTap: () async {
-                                    await Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (context) => MainWidget(),
-                                      ),
-                                    );
+                                    Navigator.pop(context);
+                                    // await Navigator.push(
+                                    //   context,
+                                    //   MaterialPageRoute(
+                                    //     builder: (context) => MainWidget(),
+                                    //   ),
+                                    // );
                                   },
                                   child: SvgPicture.asset(
                                     'assets/images/close.svg',
@@ -490,7 +508,7 @@ class _PreviewPageFourWidgetState extends State<PreviewPageFourWidget> {
                                 padding:
                                     EdgeInsetsDirectional.fromSTEB(3, 0, 0, 0),
                                 child: Text(
-                                  '\$9.90/week',
+                                  '\$${sl<ConfigApp>().product == null ? 4.99 : sl<ConfigApp>().product!.price}/week',
                                   style: FlutterFlowTheme.of(context)
                                       .bodyText1
                                       .override(
@@ -509,12 +527,13 @@ class _PreviewPageFourWidgetState extends State<PreviewPageFourWidget> {
                         padding: EdgeInsetsDirectional.fromSTEB(16, 16, 16, 0),
                         child: FFButtonWidget(
                           onPressed: () async {
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => MainWidget(),
-                              ),
-                            );
+                            purchase();
+                            // await Navigator.push(
+                            //   context,
+                            //   MaterialPageRoute(
+                            //     builder: (context) => MainWidget(),
+                            //   ),
+                            // );
                           },
                           text: 'Purchase',
                           options: FFButtonOptions(

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:music_to_video/project_editor/project_editor_widget.dart';
 
@@ -61,6 +62,8 @@ class _CreateProjectWidgetState extends State<CreateProjectWidget> {
 
   void navigate(File file){
     Navigator.pop(context);
+    FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+    analytics.logEvent(name: 'new_project');
     Navigator.push(
         context,
         MaterialPageRoute<void>(

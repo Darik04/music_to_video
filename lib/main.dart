@@ -1,5 +1,8 @@
 import 'package:apphud/apphud.dart';
 import 'package:apphud/models/apphud_models/composite/apphud_product_composite.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -17,9 +20,21 @@ import 'locator.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  //Firebase init
   await Firebase.initializeApp();
   await FlutterFlowTheme.initialize();
+
+  //AppHud init
   await Apphud.start(apiKey: "app_XDNBhgwwi28LccUQQb3jKYoydJHsg3");
+
+  //Firebase crashlytics init
+  FlutterError.onError = (errorDetails) {
+    FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+  };
+  PlatformDispatcher.instance.onError = (error, stack) {
+    FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    return true;
+  };
   runApp(MyApp());
   setupInjections();
 }
@@ -54,6 +69,12 @@ class _MyAppState extends State<MyApp> {
     );
     getConfig();
     getAppHudProducts();
+    setupAnalytics();
+  }
+
+  setupAnalytics(){
+    FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+    analytics.logAppOpen();
   }
 
   getAppHudProducts() async{

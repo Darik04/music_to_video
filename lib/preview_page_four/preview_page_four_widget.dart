@@ -1,5 +1,6 @@
 import 'package:apphud/apphud.dart';
 import 'package:apphud/models/apphud_models/composite/apphud_purchase_result.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:music_to_video/config_app.dart';
 import 'package:music_to_video/locator.dart';
 
@@ -35,6 +36,8 @@ class _PreviewPageFourWidgetState extends State<PreviewPageFourWidget> {
     if(res.subscription != null && res.subscription!.isActive){
       print('COOOLL!');
       sl<ConfigApp>().isSubscribe = true;
+      FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+      analytics.logPurchase(currency: '${sl<ConfigApp>().product!.priceLocale.currencySymbol}', value: double.parse(sl<ConfigApp>().product!.price));
       Navigator.pop(context);
     }
   }

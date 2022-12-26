@@ -27,6 +27,13 @@ class _$TracksRecordSerializer implements StructuredSerializer<TracksRecord> {
         ..add(serializers.serialize(value,
             specifiedType: const FullType(String)));
     }
+    value = object.category;
+    if (value != null) {
+      result
+        ..add('category')
+        ..add(serializers.serialize(value,
+            specifiedType: const FullType(String)));
+    }
     value = object.audio;
     if (value != null) {
       result
@@ -61,6 +68,10 @@ class _$TracksRecordSerializer implements StructuredSerializer<TracksRecord> {
           result.trackName = serializers.deserialize(value,
               specifiedType: const FullType(String)) as String?;
           break;
+        case 'category':
+          result.category = serializers.deserialize(value,
+              specifiedType: const FullType(String)) as String?;
+          break;
         case 'audio':
           result.audio = serializers.deserialize(value,
               specifiedType: const FullType(String)) as String?;
@@ -82,6 +93,8 @@ class _$TracksRecord extends TracksRecord {
   @override
   final String? trackName;
   @override
+  final String? category;
+  @override
   final String? audio;
   @override
   final DocumentReference<Object?>? ffRef;
@@ -89,7 +102,8 @@ class _$TracksRecord extends TracksRecord {
   factory _$TracksRecord([void Function(TracksRecordBuilder)? updates]) =>
       (new TracksRecordBuilder()..update(updates))._build();
 
-  _$TracksRecord._({this.trackName, this.audio, this.ffRef}) : super._();
+  _$TracksRecord._({this.trackName, this.category, this.audio, this.ffRef})
+      : super._();
 
   @override
   TracksRecord rebuild(void Function(TracksRecordBuilder) updates) =>
@@ -103,20 +117,23 @@ class _$TracksRecord extends TracksRecord {
     if (identical(other, this)) return true;
     return other is TracksRecord &&
         trackName == other.trackName &&
+        category == other.category &&
         audio == other.audio &&
         ffRef == other.ffRef;
   }
 
   @override
   int get hashCode {
-    return $jf(
-        $jc($jc($jc(0, trackName.hashCode), audio.hashCode), ffRef.hashCode));
+    return $jf($jc(
+        $jc($jc($jc(0, trackName.hashCode), category.hashCode), audio.hashCode),
+        ffRef.hashCode));
   }
 
   @override
   String toString() {
     return (newBuiltValueToStringHelper(r'TracksRecord')
           ..add('trackName', trackName)
+          ..add('category', category)
           ..add('audio', audio)
           ..add('ffRef', ffRef))
         .toString();
@@ -130,6 +147,10 @@ class TracksRecordBuilder
   String? _trackName;
   String? get trackName => _$this._trackName;
   set trackName(String? trackName) => _$this._trackName = trackName;
+
+  String? _category;
+  String? get category => _$this._category;
+  set category(String? category) => _$this._category = category;
 
   String? _audio;
   String? get audio => _$this._audio;
@@ -147,6 +168,7 @@ class TracksRecordBuilder
     final $v = _$v;
     if ($v != null) {
       _trackName = $v.trackName;
+      _category = $v.category;
       _audio = $v.audio;
       _ffRef = $v.ffRef;
       _$v = null;
@@ -170,7 +192,11 @@ class TracksRecordBuilder
 
   _$TracksRecord _build() {
     final _$result = _$v ??
-        new _$TracksRecord._(trackName: trackName, audio: audio, ffRef: ffRef);
+        new _$TracksRecord._(
+            trackName: trackName,
+            category: category,
+            audio: audio,
+            ffRef: ffRef);
     replace(_$result);
     return _$result;
   }

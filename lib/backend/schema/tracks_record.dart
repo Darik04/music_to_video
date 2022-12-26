@@ -13,6 +13,9 @@ abstract class TracksRecord
   @BuiltValueField(wireName: 'track_name')
   String? get trackName;
 
+  @BuiltValueField(wireName: 'category')
+  String? get category;
+
   String? get audio;
 
   @BuiltValueField(wireName: kDocumentReferenceField)

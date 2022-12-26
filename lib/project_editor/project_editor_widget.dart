@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:ffmpeg_kit_flutter_min_gpl/ffmpeg_kit.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:music_to_video/backend/schema/tracks_record.dart';
 import 'package:music_to_video/project_editor/done_page.dart';
@@ -882,6 +883,8 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
             setState((){
               _exported = false;
             });
+            FirebaseAnalytics analytics = FirebaseAnalytics.instance;
+            analytics.logEvent(name: 'export_project');
           }
         );
       },

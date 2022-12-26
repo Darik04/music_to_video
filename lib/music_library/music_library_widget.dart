@@ -19,6 +19,18 @@ class MusicLibraryWidget extends StatefulWidget {
 class _MusicLibraryWidgetState extends State<MusicLibraryWidget> {
   final scaffoldKey = GlobalKey<ScaffoldState>();
 
+
+  List<String> categories = [];
+  List<TracksRecord> tracks = [];
+  
+  int selectedCategory = 0;
+
+  refreshData(){
+    Future.delayed(Duration(milliseconds: 100),(){
+      setState(() {});
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -119,145 +131,188 @@ class _MusicLibraryWidgetState extends State<MusicLibraryWidget> {
                       shrinkWrap: true,
                       scrollDirection: Axis.horizontal,
                       children: [
-                        Padding(
-                          padding: EdgeInsetsDirectional.fromSTEB(16, 0, 0, 0),
-                          child: Container(
-                            width: 74,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: Color(0xFFF39530),
-                              borderRadius: BorderRadius.circular(19),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Epic',
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyText1
-                                      .override(
-                                        fontFamily: 'Poppins',
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.normal,
-                                      ),
+
+                        ...categories.map((e)
+                          => GestureDetector(
+                            onTap: (){
+                              setState(() {
+                                selectedCategory = -1;
+                              });
+                              Future.delayed(Duration(milliseconds: 100), (){
+                                setState(() {
+                                  selectedCategory = categories.indexOf(e);
+                                });
+                              });
+                            },
+                            child: Padding(
+                              padding: EdgeInsetsDirectional.fromSTEB(categories.indexOf(e) == 0 ? 16 : 8, 0, categories.indexOf(e) == (categories.length-1) ? 16 : 0, 0),
+                              child: Container(
+                                width: 119,
+                                height: 42,
+                                decoration: BoxDecoration(
+                                  color: categories.indexOf(e) == selectedCategory ? Color(0xFFF39530) : Color(0xFFB4B6B7),
+                                  borderRadius: BorderRadius.circular(19),
                                 ),
-                              ],
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.max,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      e,
+                                      style: FlutterFlowTheme.of(context)
+                                          .bodyText1
+                                          .override(
+                                            fontFamily: 'Poppins',
+                                            color: Color(0xB22A2D2F),
+                                            fontSize: 17,
+                                            fontWeight: FontWeight.normal,
+                                          ),
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           ),
-                        ),
-                        Padding(
-                          padding: EdgeInsetsDirectional.fromSTEB(8, 0, 0, 0),
-                          child: Container(
-                            width: 119,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: Color(0xFFB4B6B7),
-                              borderRadius: BorderRadius.circular(19),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Agressive',
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyText1
-                                      .override(
-                                        fontFamily: 'Poppins',
-                                        color: Color(0xB22A2D2F),
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.normal,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsetsDirectional.fromSTEB(8, 0, 0, 0),
-                          child: Container(
-                            width: 75,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: Color(0xFFB4B6B7),
-                              borderRadius: BorderRadius.circular(19),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Chill',
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyText1
-                                      .override(
-                                        fontFamily: 'Poppins',
-                                        color: Color(0xB22A2D2F),
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.normal,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsetsDirectional.fromSTEB(8, 0, 0, 0),
-                          child: Container(
-                            width: 90,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: Color(0xFFB4B6B7),
-                              borderRadius: BorderRadius.circular(19),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Funny',
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyText1
-                                      .override(
-                                        fontFamily: 'Poppins',
-                                        color: Color(0xB22A2D2F),
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.normal,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        Padding(
-                          padding: EdgeInsetsDirectional.fromSTEB(8, 0, 16, 0),
-                          child: Container(
-                            width: 119,
-                            height: 42,
-                            decoration: BoxDecoration(
-                              color: Color(0xFFB4B6B7),
-                              borderRadius: BorderRadius.circular(19),
-                            ),
-                            child: Row(
-                              mainAxisSize: MainAxisSize.max,
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Text(
-                                  'Agressive',
-                                  style: FlutterFlowTheme.of(context)
-                                      .bodyText1
-                                      .override(
-                                        fontFamily: 'Poppins',
-                                        color: Color(0xB22A2D2F),
-                                        fontSize: 17,
-                                        fontWeight: FontWeight.normal,
-                                      ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                        ).toList(),
+                        // Padding(
+                        //   padding: EdgeInsetsDirectional.fromSTEB(16, 0, 0, 0),
+                        //   child: Container(
+                        //     width: 74,
+                        //     height: 42,
+                        //     decoration: BoxDecoration(
+                        //       color: Color(0xFFF39530),
+                        //       borderRadius: BorderRadius.circular(19),
+                        //     ),
+                        //     child: Row(
+                        //       mainAxisSize: MainAxisSize.max,
+                        //       mainAxisAlignment: MainAxisAlignment.center,
+                        //       children: [
+                        //         Text(
+                        //           'Epic',
+                        //           style: FlutterFlowTheme.of(context)
+                        //               .bodyText1
+                        //               .override(
+                        //                 fontFamily: 'Poppins',
+                        //                 fontSize: 17,
+                        //                 fontWeight: FontWeight.normal,
+                        //               ),
+                        //         ),
+                        //       ],
+                        //     ),
+                        //   ),
+                        // ),
+                        // Padding(
+                        //   padding: EdgeInsetsDirectional.fromSTEB(8, 0, 0, 0),
+                        //   child: Container(
+                        //     width: 119,
+                        //     height: 42,
+                        //     decoration: BoxDecoration(
+                        //       color: Color(0xFFB4B6B7),
+                        //       borderRadius: BorderRadius.circular(19),
+                        //     ),
+                        //     child: Row(
+                        //       mainAxisSize: MainAxisSize.max,
+                        //       mainAxisAlignment: MainAxisAlignment.center,
+                        //       children: [
+                        //         Text(
+                        //           'Agressive',
+                        //           style: FlutterFlowTheme.of(context)
+                        //               .bodyText1
+                        //               .override(
+                        //                 fontFamily: 'Poppins',
+                        //                 color: Color(0xB22A2D2F),
+                        //                 fontSize: 17,
+                        //                 fontWeight: FontWeight.normal,
+                        //               ),
+                        //         ),
+                        //       ],
+                        //     ),
+                        //   ),
+                        // ),
+                        // Padding(
+                        //   padding: EdgeInsetsDirectional.fromSTEB(8, 0, 0, 0),
+                        //   child: Container(
+                        //     width: 75,
+                        //     height: 42,
+                        //     decoration: BoxDecoration(
+                        //       color: Color(0xFFB4B6B7),
+                        //       borderRadius: BorderRadius.circular(19),
+                        //     ),
+                        //     child: Row(
+                        //       mainAxisSize: MainAxisSize.max,
+                        //       mainAxisAlignment: MainAxisAlignment.center,
+                        //       children: [
+                        //         Text(
+                        //           'Chill',
+                        //           style: FlutterFlowTheme.of(context)
+                        //               .bodyText1
+                        //               .override(
+                        //                 fontFamily: 'Poppins',
+                        //                 color: Color(0xB22A2D2F),
+                        //                 fontSize: 17,
+                        //                 fontWeight: FontWeight.normal,
+                        //               ),
+                        //         ),
+                        //       ],
+                        //     ),
+                        //   ),
+                        // ),
+                        // Padding(
+                        //   padding: EdgeInsetsDirectional.fromSTEB(8, 0, 0, 0),
+                        //   child: Container(
+                        //     width: 90,
+                        //     height: 42,
+                        //     decoration: BoxDecoration(
+                        //       color: Color(0xFFB4B6B7),
+                        //       borderRadius: BorderRadius.circular(19),
+                        //     ),
+                        //     child: Row(
+                        //       mainAxisSize: MainAxisSize.max,
+                        //       mainAxisAlignment: MainAxisAlignment.center,
+                        //       children: [
+                        //         Text(
+                        //           'Funny',
+                        //           style: FlutterFlowTheme.of(context)
+                        //               .bodyText1
+                        //               .override(
+                        //                 fontFamily: 'Poppins',
+                        //                 color: Color(0xB22A2D2F),
+                        //                 fontSize: 17,
+                        //                 fontWeight: FontWeight.normal,
+                        //               ),
+                        //         ),
+                        //       ],
+                        //     ),
+                        //   ),
+                        // ),
+                        // Padding(
+                        //   padding: EdgeInsetsDirectional.fromSTEB(8, 0, 16, 0),
+                        //   child: Container(
+                        //     width: 119,
+                        //     height: 42,
+                        //     decoration: BoxDecoration(
+                        //       color: Color(0xFFB4B6B7),
+                        //       borderRadius: BorderRadius.circular(19),
+                        //     ),
+                        //     child: Row(
+                        //       mainAxisSize: MainAxisSize.max,
+                        //       mainAxisAlignment: MainAxisAlignment.center,
+                        //       children: [
+                        //         Text(
+                        //           'Agressive',
+                        //           style: FlutterFlowTheme.of(context)
+                        //               .bodyText1
+                        //               .override(
+                        //                 fontFamily: 'Poppins',
+                        //                 color: Color(0xB22A2D2F),
+                        //                 fontSize: 17,
+                        //                 fontWeight: FontWeight.normal,
+                        //               ),
+                        //         ),
+                        //       ],
+                        //     ),
+                        //   ),
+                        // ),
                       ],
                     ),
                   ),
@@ -271,6 +326,16 @@ class _MusicLibraryWidgetState extends State<MusicLibraryWidget> {
                       child: StreamBuilder<List<TracksRecord>>(
                         stream: queryTracksRecord(),
                         builder: (context, snapshot) {
+                          print('DATA GOT');
+                          if(categories.isEmpty && snapshot.hasData){
+                            tracks = snapshot.data!;
+                            for(var track in tracks){
+                              if(track.category != null && track.category != '' && !categories.contains(track.category)){
+                                categories.add(track.category!);
+                              }
+                            }
+                            refreshData();
+                          }
                           // Customize what your widget looks like when it's loading.
                           if (!snapshot.hasData) {
                             return Center(
@@ -284,8 +349,7 @@ class _MusicLibraryWidgetState extends State<MusicLibraryWidget> {
                               ),
                             );
                           }
-                          List<TracksRecord> listViewTracksRecordList =
-                              snapshot.data!;
+                          List<TracksRecord> listViewTracksRecordList = selectedCategory == -1 ? [] : tracks.where((element) => element.category == categories[selectedCategory]).toList();
                           return ListView.builder(
                             padding: EdgeInsets.zero,
                             shrinkWrap: true,
@@ -379,6 +443,7 @@ class _TrackWidgetState extends State<TrackWidget> {
                       } else {
                         await _audioPlayer.pause();
                       }
+                      setState(() {});
                     },
                     child: Container(
                       height: 32,

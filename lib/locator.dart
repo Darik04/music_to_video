@@ -6,7 +6,7 @@ final sl = GetIt.instance;
 void setupInjections() {
 
   //Main config of system
-  sl.registerLazySingleton<ConfigApp>(() => ConfigApp(editors: []));
+  // sl.registerLazySingleton<ConfigApp>(() => ConfigApp(editors: []));
 
 
 }

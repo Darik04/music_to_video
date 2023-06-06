@@ -1,7 +1,10 @@
 
 
+import 'package:flutter/material.dart';
 import 'package:music_to_video/flutter_flow/flutter_flow_util.dart';
 import 'package:music_to_video/project_editor/models/editor_model.dart';
+import 'package:music_to_video/project_editor/provider/provider.dart';
+import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 const EDITORS_LIST = 'editors_list';
@@ -23,6 +26,7 @@ Future<void> saveEditorModel(EditorModel editorModel) async{
 }
 
 Future<List<EditorModel>> getEditorModels() async{
+  print('GET EDITOR DATA');
   SharedPreferences sp = await SharedPreferences.getInstance();
 
   List<String>? list = sp.getStringList(EDITORS_LIST);

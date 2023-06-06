@@ -38,9 +38,9 @@
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>NSCameraUsageDescription</key>
-	<string>In order to take a picture or video, this app requires permission to access the camera.</string>
+	<string>To shoot video through the camera and edit in the future, you need access to the camera</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>In order to record audio for video, this app requires permission to access the microphone.</string>
+	<string>To record audio and edit in the future, you need access to the microphone</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>In order to upload media, this app requires permission to access the photo library.</string>
 	<key>NSAppleMusicUsageDescription</key>

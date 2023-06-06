@@ -2,6 +2,7 @@ import 'package:audioplayers/audioplayers.dart';
 
 class AudioModel{
   Duration duration;
+  Duration durationDefault;
   Duration startDuration;
   Duration startCutDuration;
   Duration endCutDuration;
@@ -15,6 +16,7 @@ class AudioModel{
 
   AudioModel({
     required this.duration,
+    required this.durationDefault,
     required this.audioPlayer,
     required this.startDuration,
     required this.startCutDuration,
@@ -30,6 +32,7 @@ class AudioModel{
 
   factory AudioModel.fromJson(Map<String, dynamic> json) => AudioModel(
     audioPlayer: AudioPlayer(),
+    durationDefault: Duration(seconds: json['duration_default'] ?? 0),
     duration: Duration(seconds: json['duration'] ?? 0),
     startDuration: Duration(seconds: json['start_duration'] ?? 0),
     startCutDuration: Duration(seconds: json['start_cut_duration'] ?? 0),
@@ -47,6 +50,7 @@ class AudioModel{
   Map<String, dynamic> toJson() {
     return {
       'duration': duration.inSeconds,
+      'duration_default': durationDefault.inSeconds,
       'start_duration': startDuration.inSeconds,
       'start_cut_duration': startCutDuration.inSeconds,
       'end_cut_duration': endCutDuration.inSeconds,

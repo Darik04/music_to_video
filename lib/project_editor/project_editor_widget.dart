@@ -5,10 +5,14 @@ import 'package:file_picker/file_picker.dart';
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:flutter/foundation.dart';
 import 'package:music_to_video/backend/schema/tracks_record.dart';
+import 'package:music_to_video/config_app.dart';
+import 'package:music_to_video/locator.dart';
+import 'package:music_to_video/preview_page_four/preview_page_four_widget.dart';
 import 'package:music_to_video/project_editor/done_page.dart';
 import 'package:music_to_video/project_editor/loader_page.dart';
 import 'package:music_to_video/project_editor/widgets/blur_filter.dart';
 import 'package:music_to_video/project_editor/widgets/video_widget.dart';
+import 'package:provider/provider.dart';
 import 'package:video_thumbnail/video_thumbnail.dart';
 import 'package:audioplayers/audioplayers.dart';
 import 'package:music_to_video/project_editor/helpers/editor_cache.dart';
@@ -28,6 +32,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:gallery_saver/gallery_saver.dart';
 import 'helpers/data_saver.dart';
 import 'helpers/thumbnail.dart';
+import 'provider/provider.dart';
 
 class ProjectEditorWidget extends StatefulWidget {
   final EditorModel? editorModel;
@@ -130,6 +135,7 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
         cacheFiles.add(audioInputPath);
       }
       _exportingProgress.value += (6/100);
+      print('AFTER MERGE');
     }
     String command = '-i \'${ _controller.dataSource}\' -ss 00:00:00  -t 0${videoDur.toString().substring(0, 7)}';
     final String tempPath = (await getTemporaryDirectory()).path;
@@ -186,6 +192,7 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
       await newAudioPlayer.setSource(DeviceFileSource(audioPath));
       _records.add(
         AudioModel(
+          durationDefault: (await newAudioPlayer.getDuration()) ?? Duration.zero,
           duration: (await newAudioPlayer.getDuration()) ?? Duration.zero, 
           startDuration: Duration(seconds: 0), 
           startCutDuration: Duration(seconds: 0), 
@@ -391,10 +398,12 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
 
 
   _resetVideo(){
+    _allPlayerPause();
     Duration durVideo = videoDur;
     setState(() {
       isCuttingVideo = true;
     });
+    _resetAudioRecords();
     print('RESET VIDEO');
     if(_controller.dataSource != editorModel!.pathToOriginalVideo){
       File(_controller.dataSource).delete();
@@ -420,6 +429,18 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
       setState(() {});
       saveChanges();
     });
+  }
+
+
+  _resetAudioRecords(){
+    for(int index = 0; index < _records.length; index++){
+      _records[index].startDuration = Duration.zero;
+      _records[index].duration = _records[index].durationDefault;
+      _records[index].endCutDurationForExport = Duration(milliseconds: 0);
+      _records[index].startCutDurationForExport = Duration(milliseconds: 0);
+      _records[index].endCutDuration = _records[index].durationDefault;
+      _records[index].startCutDuration = Duration(seconds: 0);
+    }
   }
 
 
@@ -458,231 +479,237 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
     return Scaffold(
       // key: scaffoldKey,
       backgroundColor: Color(0xFF2A2D2F),
-      body: GestureDetector(
-        onTap: () => FocusScope.of(context).unfocus(),
-        child: Align(
-          alignment: AlignmentDirectional(0, 0),
-          child: Container(
-            height: MediaQuery.of(context).size.height,
-            decoration: BoxDecoration(
-              image: DecorationImage(
-                fit: BoxFit.fill,
-                image: Image.asset(
-                  'assets/images/bg.png',
-                ).image,
-              ),
-            ),
+      body: WillPopScope(
+        onWillPop: () async{
+          print('POP SCREEN');
+          _allPlayerPause();
+          return true;
+        },
+        child: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: Align(
             alignment: AlignmentDirectional(0, 0),
             child: Container(
               height: MediaQuery.of(context).size.height,
-              padding: EdgeInsetsDirectional.fromSTEB(0, 16, 0, 16),
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.max,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    SafeArea(
-                      child: Align(
-                        alignment: AlignmentDirectional(1, -1),
-                        child: Padding(
-                          padding:
-                              EdgeInsetsDirectional.fromSTEB(16, 0, 16, 0),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.max,
-                            mainAxisAlignment:
-                                MainAxisAlignment.spaceBetween,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              InkWell(
-                                onTap: () async {
-                                  await Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => MainWidget(),
-                                    ),
-                                  );
-                                },
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    Padding(
-                                      padding:
-                                          EdgeInsetsDirectional.fromSTEB(
-                                              0, 0, 12, 0),
-                                      child: SvgPicture.asset(
-                                        'assets/images/Plus.svg',
-                                        width: 24,
-                                        height: 24,
-                                        fit: BoxFit.contain,
-                                      ),
-                                    ),
-                                    Text(
-                                      'New',
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyText1
-                                          .override(
-                                            fontFamily: 'Poppins',
-                                            color: Color(0xFFFDFEFF),
-                                            fontWeight: FontWeight.w500,
-                                            lineHeight: 1.2,
-                                          ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              InkWell(
-                                onTap: () async {
-                                  if(_records.isNotEmpty){
+              decoration: BoxDecoration(
+                image: DecorationImage(
+                  fit: BoxFit.fill,
+                  image: Image.asset(
+                    'assets/images/bg.png',
+                  ).image,
+                ),
+              ),
+              alignment: AlignmentDirectional(0, 0),
+              child: Container(
+                height: MediaQuery.of(context).size.height,
+                padding: EdgeInsetsDirectional.fromSTEB(0, 16, 0, 16),
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.max,
+                    mainAxisAlignment: MainAxisAlignment.start,
+                    children: [
+                      SafeArea(
+                        child: Align(
+                          alignment: AlignmentDirectional(1, -1),
+                          child: Padding(
+                            padding:
+                                EdgeInsetsDirectional.fromSTEB(16, 0, 16, 0),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.max,
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                InkWell(
+                                  onTap: () {
                                     _allPlayerPause();
-                                    _exportVideo();
-                                  }
-                                },
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.max,
-                                  children: [
-                                    Padding(
-                                      padding:
-                                          EdgeInsetsDirectional.fromSTEB(
-                                              0, 0, 12, 0),
-                                      child: SvgPicture.asset(
-                                        'assets/images/Download.svg',
-                                        width: 24,
-                                        height: 24,
-                                        fit: BoxFit.contain,
+                                    Navigator.pop(context);
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.max,
+                                    children: [
+                                      Padding(
+                                        padding:
+                                            EdgeInsetsDirectional.fromSTEB(
+                                                0, 0, 12, 0),
+                                        child: SvgPicture.asset(
+                                          'assets/images/Plus.svg',
+                                          width: 24,
+                                          height: 24,
+                                          fit: BoxFit.contain,
+                                        ),
                                       ),
-                                    ),
-                                    Text(
-                                      'Save',
-                                      style: FlutterFlowTheme.of(context)
-                                          .bodyText1
-                                          .override(
-                                            fontFamily: 'Poppins',
-                                            color: Color(0xFFF39530),
-                                            fontWeight: FontWeight.w500,
-                                            lineHeight: 1.2,
-                                          ),
-                                    ),
-                                  ],
+                                      Text(
+                                        'New',
+                                        style: FlutterFlowTheme.of(context)
+                                            .bodyText1
+                                            .override(
+                                              fontFamily: 'Poppins',
+                                              color: Color(0xFFFDFEFF),
+                                              fontWeight: FontWeight.w500,
+                                              lineHeight: 1.2,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ),
-                            ],
+                                InkWell(
+                                  onTap: () async {
+                                    _allPlayerPause();
+                                    //DEBUG
+                                    // if(!sl<ConfigApp>().isSubscribe){
+                                    //   Navigator.push(context, MaterialPageRoute(builder: (BuildContext context) => PreviewPageFourWidget()));
+                                    // }else{
+                                      _exportVideo();
+                                    // }
+                                  },
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.max,
+                                    children: [
+                                      Padding(
+                                        padding:
+                                            EdgeInsetsDirectional.fromSTEB(
+                                                0, 0, 12, 0),
+                                        child: SvgPicture.asset(
+                                          'assets/images/Download.svg',
+                                          width: 24,
+                                          height: 24,
+                                          fit: BoxFit.contain,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Save',
+                                        style: FlutterFlowTheme.of(context)
+                                            .bodyText1
+                                            .override(
+                                              fontFamily: 'Poppins',
+                                              color: Color(0xFFF39530),
+                                              fontWeight: FontWeight.w500,
+                                              lineHeight: 1.2,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                    Align(
-                      alignment: AlignmentDirectional(0, 0),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.max,
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Padding(
-                            padding:
-                                EdgeInsetsDirectional.fromSTEB(0, 58, 0, 0),
-                            child: Container(
-                              width: double.infinity,
-                              // height: 808,
-                              decoration: BoxDecoration(),
-                              child: Column(
-                                children: [
-                                  GestureDetector(
-                                    onTap: (){
-                                      _controller.value.isPlaying ? _controller.pause() : _controller.play();
-                                    },
-                                    child: SizedBox(
-                                      height: 272,
-                                      child: Stack(
-                                        alignment: Alignment.center,
-                                        children: [
-                                          BlurFilter(
-                                            child: VideoPlayer(_controller)
-                                          ),
-                                          AspectRatio(
-                                            aspectRatio: _controller.value.aspectRatio,
-                                            child: VideoPlayer(_controller)
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                  ),
-                                  if(true)
-                                  AnimatedBuilder(
-                                    animation: _controller,
-                                    builder: (_, __) {
-                                      final duration = videoDur.inSeconds;
-                                      final pos = _controller.value.position;
-                                      // final start = _controller.minTrim * duration;
-                                      // final end = _controller.maxTrim * duration;
-
-                                      return Padding(
-                                        padding:
-                                            EdgeInsetsDirectional.fromSTEB(
-                                                0, 44, 0, 0),
-                                        child: Row(
-                                          mainAxisSize: MainAxisSize.max,
-                                          mainAxisAlignment:
-                                              MainAxisAlignment.center,
-                                              crossAxisAlignment: CrossAxisAlignment.center,
+                      Align(
+                        alignment: AlignmentDirectional(0, 0),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.max,
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            Padding(
+                              padding:
+                                  EdgeInsetsDirectional.fromSTEB(0, 58, 0, 0),
+                              child: Container(
+                                width: double.infinity,
+                                // height: 808,
+                                decoration: BoxDecoration(),
+                                child: Column(
+                                  children: [
+                                    GestureDetector(
+                                      onTap: (){
+                                        _controller.value.isPlaying ? _controller.pause() : _controller.play();
+                                      },
+                                      child: SizedBox(
+                                        height: 272,
+                                        child: Stack(
+                                          alignment: Alignment.center,
                                           children: [
-                                            GestureDetector(
-                                              onTap: _resetVideo,
-                                              child: SvgPicture.asset(
-                                                'assets/images/reset_video.svg',
-                                                height: 26,
-                                                fit: BoxFit.cover,
-                                              ),
+                                            BlurFilter(
+                                              child: VideoPlayer(_controller)
                                             ),
-                                            SizedBox(width: 12,),
-                                            GestureDetector(
-                                              onTap: () {
-                                                !_controller.value.isPlaying
-                                                    ? _controller.play()
-                                                    : _controller.pause();
-                                              },
-                                              child: SvgPicture.asset(
-                                                !_controller.value.isPlaying
-                                                    ? 'assets/images/Play.svg'
-                                                    : 'assets/images/pause.svg',
-                                                width: 32,
-                                                height: 32,
-                                                fit: BoxFit.cover,
-                                              ),
-                                            ),
-                                            Padding(
-                                              padding: EdgeInsetsDirectional
-                                                  .fromSTEB(10, 0, 0, 0),
-                                              child: Text(
-                                                // _controller.isTrimming
-                                                    // ? '${formatter(Duration(seconds: start.toInt()))} / ${formatter(Duration(seconds: end.toInt()))}',
-                                                    // : 
-                                                    '${formatter(Duration(seconds: pos.inSeconds))} / ${formatter(Duration(seconds: duration.toInt()))}',
-                                                style: FlutterFlowTheme.of(
-                                                        context)
-                                                    .bodyText1
-                                                    .override(
-                                                      fontFamily: 'Poppins',
-                                                      color:
-                                                          Color(0xFFFDFEFF),
-                                                      fontWeight:
-                                                          FontWeight.normal,
-                                                      lineHeight: 1.2,
-                                                    ),
-                                              ),
-                                            ),
+                                            AspectRatio(
+                                              aspectRatio: _controller.value.aspectRatio,
+                                              child: VideoPlayer(_controller)
+                                            )
                                           ],
                                         ),
-                                      );
-                                    },
-                                  ),
-                                  ..._trimSlider(),
-                                ],
+                                      ),
+                                    ),
+                                    if(true)
+                                    AnimatedBuilder(
+                                      animation: _controller,
+                                      builder: (_, __) {
+                                        final duration = videoDur.inSeconds;
+                                        final pos = _controller.value.position;
+                                        // final start = _controller.minTrim * duration;
+                                        // final end = _controller.maxTrim * duration;
+
+                                        return Padding(
+                                          padding:
+                                              EdgeInsetsDirectional.fromSTEB(
+                                                  0, 44, 0, 0),
+                                          child: Row(
+                                            mainAxisSize: MainAxisSize.max,
+                                            mainAxisAlignment:
+                                                MainAxisAlignment.center,
+                                                crossAxisAlignment: CrossAxisAlignment.center,
+                                            children: [
+                                              GestureDetector(
+                                                onTap: _resetVideo,
+                                                child: SvgPicture.asset(
+                                                  'assets/images/reset_video.svg',
+                                                  height: 26,
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              ),
+                                              SizedBox(width: 12,),
+                                              GestureDetector(
+                                                onTap: () {
+                                                  !_controller.value.isPlaying
+                                                      ? _controller.play()
+                                                      : _controller.pause();
+                                                },
+                                                child: SvgPicture.asset(
+                                                  !_controller.value.isPlaying
+                                                      ? 'assets/images/Play.svg'
+                                                      : 'assets/images/pause.svg',
+                                                  width: 32,
+                                                  height: 32,
+                                                  fit: BoxFit.cover,
+                                                ),
+                                              ),
+                                              Padding(
+                                                padding: EdgeInsetsDirectional
+                                                    .fromSTEB(10, 0, 0, 0),
+                                                child: Text(
+                                                  // _controller.isTrimming
+                                                      // ? '${formatter(Duration(seconds: start.toInt()))} / ${formatter(Duration(seconds: end.toInt()))}',
+                                                      // : 
+                                                      '${formatter(Duration(seconds: pos.inSeconds))} / ${formatter(Duration(seconds: duration.toInt()))}',
+                                                  style: FlutterFlowTheme.of(
+                                                          context)
+                                                      .bodyText1
+                                                      .override(
+                                                        fontFamily: 'Poppins',
+                                                        color:
+                                                            Color(0xFFFDFEFF),
+                                                        fontWeight:
+                                                            FontWeight.normal,
+                                                        lineHeight: 1.2,
+                                                      ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                    ..._trimSlider(),
+                                  ],
+                                ),
                               ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -873,6 +900,9 @@ class _ProjectEditorWidgetState extends State<ProjectEditorWidget> {
             },
           ),
         );
+
+        //Fetching dates 
+        Provider.of<MainProvider>(context, listen: false).fetchData();
 
         setState(() => _exported = true);
         Future.delayed(const Duration(seconds: 2),

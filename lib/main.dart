@@ -1,5 +1,4 @@
-import 'package:apphud/apphud.dart';
-import 'package:apphud/models/apphud_models/composite/apphud_product_composite.dart';
+//APPHUD
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:flutter/foundation.dart';
@@ -8,7 +7,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:music_to_video/config_app.dart';
+import 'package:music_to_video/helpers.dart';
 import 'package:music_to_video/project_editor/helpers/editor_cache.dart';
+import 'package:music_to_video/project_editor/provider/provider.dart';
+import 'package:provider/provider.dart';
 import 'auth/firebase_user_provider.dart';
 import 'auth/auth_util.dart';
 
@@ -24,8 +26,9 @@ void main() async {
   await Firebase.initializeApp();
   await FlutterFlowTheme.initialize();
 
-  //AppHud init
-  await Apphud.start(apiKey: "app_XDNBhgwwi28LccUQQb3jKYoydJHsg3");
+//APPHUD
+  // AppHud init
+  // await Apphud.start(apiKey: "app_XDNBhgwwi28LccUQQb3jKYoydJHsg3");
 
   //Firebase crashlytics init
   FlutterError.onError = (errorDetails) {
@@ -78,24 +81,27 @@ class _MyAppState extends State<MyApp> {
   }
 
   getAppHudProducts() async{
-    print('ACTIVE SUB: ${await Apphud.hasActiveSubscription()}');
-    List<ApphudProductComposite>? list = await Apphud.products();
-    print('APPHUD PRODUCTS: ${await Apphud.products()}');
-    if(list != null){
-      for(var item in list){
-        print('APPHUD ITEM: ${item.skProductWrapper}');
-        print('APPHUD ITEM2: ${item.skuDetailsWrapper}');
-      }
-      sl<ConfigApp>().product = list.first.skProductWrapper;
-      sl<ConfigApp>().isSubscribe = await Apphud.hasActiveSubscription();
-    }
+//APPHUD
+    // print('ACTIVE SUB: ${await Apphud.hasActiveSubscription()}');
+    // List<ApphudProductComposite>? list = await Apphud.products();
+    // print('APPHUD PRODUCTS: ${await Apphud.products()}');
+    // if(list != null){
+    //   for(var item in list){
+    //     print('APPHUD ITEM: ${item.skProductWrapper}');
+    //     print('APPHUD ITEM2: ${item.skuDetailsWrapper}');
+    //   }
+    //   sl<ConfigApp>().product = list.first.skProductWrapper;
+    //   sl<ConfigApp>().isSubscribe = await Apphud.hasActiveSubscription();
+    // }
+    // sl<ConfigApp>().firstOpen = await initFirstOpen();
     setState(() {
       isLoading = false;  
     });
   }
 
   getConfig() async{
-    sl<ConfigApp>().editors = await getEditorModels();
+    // sl<ConfigApp>().editors = await getEditorModels();
+    // Provider.of<MainProvider>(context, listen: false).fetchData();
   }
 
   @override
@@ -114,33 +120,37 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'MusicToVideo',
-      localizationsDelegates: [
-        FFLocalizationsDelegate(),
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      locale: _locale,
-      supportedLocales: const [Locale('en', '')],
-      theme: ThemeData(brightness: Brightness.light),
-      darkTheme: ThemeData(brightness: Brightness.dark),
-      themeMode: _themeMode,
-      home: initialUser == null || displaySplashImage || isLoading
-          ? Center(
-              child: SizedBox(
-                width: 50,
-                height: 50,
-                child: CircularProgressIndicator(
-                  color: FlutterFlowTheme.of(context).primaryColor,
-                ),
-              ),
-            )
-          : currentUser!.loggedIn
-              ? PreviewPageWidget()
-              : MainWidget(),
+    return ChangeNotifierProvider<MainProvider>(
+      create: (context) => MainProvider(),
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'MusicToVideo',
+        localizationsDelegates: [
+          FFLocalizationsDelegate(),
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        locale: _locale,
+        supportedLocales: const [Locale('en', '')],
+        theme: ThemeData(brightness: Brightness.light),
+        darkTheme: ThemeData(brightness: Brightness.dark),
+        themeMode: _themeMode,
+        // home: initialUser == null || displaySplashImage || isLoading
+        //     ? Center(
+        //         child: SizedBox(
+        //           width: 50,
+        //           height: 50,
+        //           child: CircularProgressIndicator(
+        //             color: FlutterFlowTheme.of(context).primaryColor,
+        //           ),
+        //         ),
+        //       )
+        //     : sl<ConfigApp>().firstOpen//currentUser!.loggedIn
+        //         ? PreviewPageWidget()
+        //         : MainWidget(),
+        home: MainWidget(),
+      ),
     );
   }
 }

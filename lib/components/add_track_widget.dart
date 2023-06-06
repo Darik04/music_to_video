@@ -88,50 +88,50 @@ class _AddTrackWidgetState extends State<AddTrackWidget> {
                         ),
                       ),
                     ),
-                    Container(
-                      width: 302,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        color: Color(0xFFEF7C00),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: InkWell(
-                        onTap: () async {
-                          await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => MusicLibraryWidget(),
-                            ),
-                          ).then((value) => Navigator.pop(context, value));
-                        },
-                        child: Row(
-                          mainAxisSize: MainAxisSize.max,
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            SvgPicture.asset(
-                              'assets/images/ChooseTrack.svg',
-                              width: 24,
-                              height: 26,
-                              fit: BoxFit.cover,
-                            ),
-                            Padding(
-                              padding:
-                                  EdgeInsetsDirectional.fromSTEB(27, 0, 0, 0),
-                              child: Text(
-                                'Choose track',
-                                style: FlutterFlowTheme.of(context)
-                                    .bodyText1
-                                    .override(
-                                      fontFamily: 'Poppins',
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    // Container(
+                    //   width: 302,
+                    //   height: 56,
+                    //   decoration: BoxDecoration(
+                    //     color: Color(0xFFEF7C00),
+                    //     borderRadius: BorderRadius.circular(20),
+                    //   ),
+                    //   child: InkWell(
+                    //     onTap: () async {
+                    //       await Navigator.push(
+                    //         context,
+                    //         MaterialPageRoute(
+                    //           builder: (context) => MusicLibraryWidget(),
+                    //         ),
+                    //       ).then((value) => Navigator.pop(context, value));
+                    //     },
+                    //     child: Row(
+                    //       mainAxisSize: MainAxisSize.max,
+                    //       mainAxisAlignment: MainAxisAlignment.center,
+                    //       children: [
+                    //         SvgPicture.asset(
+                    //           'assets/images/ChooseTrack.svg',
+                    //           width: 24,
+                    //           height: 26,
+                    //           fit: BoxFit.cover,
+                    //         ),
+                    //         Padding(
+                    //           padding:
+                    //               EdgeInsetsDirectional.fromSTEB(27, 0, 0, 0),
+                    //           child: Text(
+                    //             'Choose track',
+                    //             style: FlutterFlowTheme.of(context)
+                    //                 .bodyText1
+                    //                 .override(
+                    //                   fontFamily: 'Poppins',
+                    //                   fontSize: 16,
+                    //                   fontWeight: FontWeight.w500,
+                    //                 ),
+                    //           ),
+                    //         ),
+                    //       ],
+                    //     ),
+                    //   ),
+                    // ),
                     Padding(
                       padding: EdgeInsetsDirectional.fromSTEB(0, 14, 0, 0),
                       child: FFButtonWidget(
